@@ -22,7 +22,7 @@ echo " ";
 
 travis_fold start "build.bootstrap" && travis_time_start;
 echo -e "\033[1;33mBootstrapping...\033[0m";
-echo "$ proof/proofboot/bootstrap.py --src proof --dest bin";
+echo "$ proof/proofboot/bootstrap.py --src proof --dest bin --skip-private";
 docker exec -t builder bash -c "exec 3>&1; set -o pipefail; rm -rf /sandbox/logs/*; \
     proof/proofboot/bootstrap.py --src proof --dest bin 2>&1 1>&3 | (tee /sandbox/logs/errors.log 1>&2)";
 travis_time_finish && travis_fold end "build.bootstrap" && proofboot/travis/check_for_errorslog.sh bootstrap || true;

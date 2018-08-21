@@ -24,16 +24,17 @@ mv bin proof-bin;
 travis_time_finish;
 
 travis_fold start "prepare.dev_tools_copy" && travis_time_start;
-echo -e "\033[1;33mAdding dev-tools and VERSION...\033[0m";
+echo -e "\033[1;33mAdding dev-tools, deploy and VERSION...\033[0m";
 mkdir proof-bin/dev-tools;
 cp -vR $TRAVIS_BUILD_DIR/proofboot/travis proof-bin/dev-tools/travis;
+cp -vR $TRAVIS_BUILD_DIR/deploy proof-bin/deploy;
 echo $PROOF_VERSION > proof-bin/VERSION;
 travis_time_finish && travis_fold end "prepare.dev_tools_copy";
 echo -e "\033[1;35mVERSION:\033[0m" && cat proof-bin/VERSION;
 
 travis_time_start;
-echo -e "\033[1;33mRemoving tests...\033[0m";
-rm -rf proof-bin/tests;
+echo -e "\033[1;33mRemoving tests and examples stuff...\033[0m";
+rm -rf proof-bin/tools proof-bin/tests proof-bin/examples;
 travis_time_finish;
 travis_time_start;
 echo -e "\033[1;33mPacking proof-bin.tar.gz...\033[0m";
@@ -43,8 +44,8 @@ travis_time_finish;
 travis_time_start;
 echo -e "\033[1;33mUploading to AWS S3...\033[0m";
 if [ -n "$RELEASE_BUILD" ]; then
-    aws s3 cp proof-bin.tar.gz s3://proof.travis.builds/__releases/proof/raw-bin/$PROOF_VERSION/proof-bin-android.tar.gz;
+    aws s3 cp proof-bin.tar.gz s3://proof.travis.builds/__releases/proof/raw-bin/$PROOF_VERSION/proof-bin-$1.tar.gz;
 else
-    aws s3 cp proof-bin.tar.gz s3://proof.travis.builds/$TRAVIS_BRANCH/proof-bin-android.tar.gz;
+    aws s3 cp proof-bin.tar.gz s3://proof.travis.builds/$TRAVIS_BRANCH/raw-bin/proof-bin-$1.tar.gz;
 fi
 travis_time_finish

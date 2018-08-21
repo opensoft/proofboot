@@ -11,8 +11,27 @@ defineReplace(proof_plugin_destdir_by_module) {
     return ($$system_path($$BUILDPATH/imports/$$proof_plugin_dir_by_module($$1)))
 }
 
-defineReplace(proof_module_includes) {
-    return ($$system_path($$PWD/../$$1) $$system_path($$PWD/../$$1/include) $$system_path($$PWD/../$$1/include/private))
+defineTest(add_proof_module_includes) {
+    MODULE_NAME = $$1
+    contains(CONFIG, proof_internal):exists($$_PRO_FILE_PWD_/../proof.pro) {
+        INCLUDEPATH *= $$clean_path($$system_path($$_PRO_FILE_PWD_/../$$MODULE_NAME))
+        INCLUDEPATH *= $$clean_path($$system_path($$_PRO_FILE_PWD_/../$$MODULE_NAME/include))
+        INCLUDEPATH *= $$clean_path($$system_path($$_PRO_FILE_PWD_/../$$MODULE_NAME/include/private))
+        export(INCLUDEPATH)
+    } else:contains(CONFIG, proof_internal):exists($$_PRO_FILE_PWD_/../../proof.pro) {
+# TODO: remove after full switch to submodules
+        INCLUDEPATH *= $$clean_path($$system_path($$_PRO_FILE_PWD_/../../$$MODULE_NAME))
+        INCLUDEPATH *= $$clean_path($$system_path($$_PRO_FILE_PWD_/../../$$MODULE_NAME/include))
+        INCLUDEPATH *= $$clean_path($$system_path($$_PRO_FILE_PWD_/../../$$MODULE_NAME/include/private))
+        export(INCLUDEPATH)
+    } else:contains(CONFIG, proof_internal):exists($$_PRO_FILE_PWD_/../../../proof.pro) {
+# TODO: remove after full switch to submodules
+        INCLUDEPATH *= $$clean_path($$system_path($$_PRO_FILE_PWD_/../../../$$MODULE_NAME))
+        INCLUDEPATH *= $$clean_path($$system_path($$_PRO_FILE_PWD_/../../../$$MODULE_NAME/include))
+        INCLUDEPATH *= $$clean_path($$system_path($$_PRO_FILE_PWD_/../../../$$MODULE_NAME/include/private))
+        export(INCLUDEPATH)
+    }
+    return(true)
 }
 
 #Usage find_package(<pkgconfig package>[, <Macro definition if find>])

@@ -9,6 +9,7 @@ versionAtLeast(QT_VERSION, 5.11.0):!msvc:CONFIG += qtquickcompiler
 OBJECTS_DIR = $$OUT_PWD/$$TARGET
 MOC_DIR = $$OBJECTS_DIR
 RCC_DIR = $$OBJECTS_DIR
+DESTDIR = $$BUILDPATH/lib
 
 !contains(DEFINES, FORCE_QCA_DISABLED) {
     load(crypto) {
@@ -24,10 +25,10 @@ msvc {
     QMAKE_CXXFLAGS += /wd4127
 }
 
-# TODO: Can we somehow move that modules includes into features maybe?
-INCLUDEPATH += $$PWD/.. \
-    $$proof_module_includes(proofseed) \
-    $$proof_module_includes(proofbase) \
-    $$proof_module_includes(proofutils) \
-    $$proof_module_includes(proofnetworkjdf)
+INCLUDEPATH *= $$clean_path($$system_path($$PWD/include))
+INCLUDEPATH *= $$clean_path($$system_path($$PWD/include/private))
+INCLUDEPATH *= $$clean_path($$system_path($$_PRO_FILE_PWD_/include))
+INCLUDEPATH *= $$clean_path($$system_path($$_PRO_FILE_PWD_/include/private))
+# TODO: remove after full switch to submodules
+INCLUDEPATH *= $$clean_path($$system_path($$PWD/..))
 android:QT += androidextras

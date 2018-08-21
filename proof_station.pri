@@ -2,6 +2,10 @@ include($$(PROOF_PATH)/proof_functions.pri)
 CONFIG += c++14 proof
 versionAtLeast(QT_VERSION, 5.11.0):!msvc:CONFIG += qtquickcompiler
 
+OBJECTS_DIR = $$OUT_PWD
+MOC_DIR = $$OBJECTS_DIR
+RCC_DIR = $$OBJECTS_DIR
+
 !contains(DEFINES, FORCE_QCA_DISABLED) {
     load(crypto) {
         DEFINES -= QCA_DISABLED

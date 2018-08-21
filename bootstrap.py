@@ -3,6 +3,8 @@ import argparse
 from pathlib import Path
 import shutil
 
+global_allow_private = True
+
 def setup_parser():
     parser = argparse.ArgumentParser(description="Bootstrap tool for Proof")
 
@@ -16,9 +18,13 @@ def setup_parser():
                        help='Bootstrap only googletest (with src as path to its root, doesn\'t work with --single-module)')
     parser.add_argument('--boot-only', dest='boot_only', action='store_true',
                        help='Bootstrap only stuff from proofboot (doesn\'t work with --single-module)')
+    parser.add_argument('--skip-private', dest='allow_private', action='store_false',
+                       help='Bootstrap without private parts')
     return parser
 
-def process_include_dir(src_path, dest_path):
+def process_include_dir(src_path, dest_path, allow_private):
+    global global_allow_private
+    allow_private = allow_private and global_allow_private
     if not src_path.exists():
         print(src_path, "doesn't exist, skipping it")
         return
@@ -28,11 +34,10 @@ def process_include_dir(src_path, dest_path):
         entry_name = entry.name
         if entry_name[0] == ".":
             continue
-        if entry.is_dir() and entry.name != "private":
-            process_include_dir(entry, dest_path/entry_name)
-        else:
-            if not "_p.h" in entry_name and not "_p.hpp" in entry_name and (entry_name[-2:] == ".h" or entry_name[-4:] == ".hpp"):
-                shutil.copy2(entry.as_posix(), (dest_path/entry_name).as_posix())
+        if entry.is_dir() and (allow_private or entry.name != "private"):
+            process_include_dir(entry, dest_path/entry_name, allow_private)
+        elif (entry_name[-2:] == ".h" or entry_name[-4:] == ".hpp") and (allow_private or (not "_p.h" in entry_name and not "_p.hpp" in entry_name)):
+            shutil.copy2(entry.as_posix(), (dest_path/entry_name).as_posix())
 
 def copy_dir(src_path, dest_path):
     if not dest_path.exists():
@@ -47,9 +52,17 @@ def copy_dir(src_path, dest_path):
             copy_dir(entry, dest_path/entry_name)
 
 def process_module(src_module_path, dest_path):
-    process_include_dir(src_module_path/"include", dest_path/"include")
-    process_include_dir(src_module_path/"3rdparty", dest_path/"include/3rdparty")
+    process_include_dir(src_module_path/"include", dest_path/"include", True)
+    process_include_dir(src_module_path/"3rdparty", dest_path/"include/3rdparty", False)
     copy_dir(src_module_path/"features", dest_path/"features")
+    extra_boot_path = src_module_path/"boot"
+    if extra_boot_path.exists():
+        for entry in extra_boot_path.iterdir():
+            entry_name = entry.name
+            if entry_name[0] == ".":
+                continue
+            if entry_name[-3:] == ".py" or entry_name[-4:] == ".pri":
+                shutil.copy2(entry.as_posix(), (dest_path/entry_name).as_posix())
 
 def process_proofboot(sources_path, dest_path):
     boot_path = sources_path/"proofboot"
@@ -69,6 +82,7 @@ def process_proofboot(sources_path, dest_path):
     shutil.copy2((boot_path/"proof_functions.pri").as_posix(), (dest_path/"proof_functions.pri").as_posix())
     shutil.copy2((boot_path/"proof_translation.pri").as_posix(), (dest_path/"proof_translation.pri").as_posix())
     shutil.copy2((boot_path/"app_tests.pri").as_posix(), (dest_path/"app_tests.pri").as_posix())
+    shutil.copy2((boot_path/"proof_tests.pri").as_posix(), (dest_path/"proof_tests.pri").as_posix())
     print ("Project includes copied.")
 
     shutil.copy2((boot_path/"generate_translation.py").as_posix(), (dest_path/"generate_translation.py").as_posix())
@@ -78,7 +92,7 @@ def process_proofboot(sources_path, dest_path):
 
 def process_gtest(sources_path, dest_path):
     print ("Copying Google Test includes...")
-    process_include_dir(sources_path/"gtest", dest_path/"include/gtest")
+    process_include_dir(sources_path/"gtest", dest_path/"include/gtest", False)
     shutil.copy2((sources_path/"test_global.h").as_posix(), (dest_path/"include/gtest/test_global.h").as_posix())
     shutil.copy2((sources_path/"test_fakeserver.h").as_posix(), (dest_path/"include/gtest/test_fakeserver.h").as_posix())
     print ("Google Test includes copied.")
@@ -92,7 +106,7 @@ def full_bootstrap(sources_path, dest_path):
         if not src_module_path.exists() or not src_module_path.is_dir():
             continue
         print ("Processing", src_module_path, "...")
-        process_include_dir(src_module_path, dest_module_path)
+        process_include_dir(src_module_path, dest_module_path, False)
         print (src_module_path, "done")
 
     print ("Copying features...")
@@ -118,6 +132,8 @@ def full_bootstrap(sources_path, dest_path):
 def main():
     parser = setup_parser()
     args = parser.parse_args()
+    global global_allow_private
+    global_allow_private = args.allow_private
 
     sources_path = Path(args.src_dir).resolve()
     dest_path = Path(args.dest_dir)
