@@ -1,10 +1,10 @@
-include(proof_station.pri)
+include($$(PROOF_PATH)/proof_app.pri)
 
 QT += network
 CONFIG += proofnetwork
 CONFIG -= app_bundle
 
-linux {
+linux:!android {
     # Needs proof-restarter init.d script from proof package
     target_spawn.path = $$PREFIX/opt/Opensoft/proof/bin/
     target_spawn.commands = \

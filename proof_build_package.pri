@@ -1,6 +1,11 @@
 include($$(PROOF_PATH)/proof_functions.pri)
 
 win32: CONFIG(release, debug|release)  {
+
+    # Todo: fix it
+    defineReplace(proof_plugin_dir_by_module) {
+        return ($$system_path(Proof/$$1))
+    }
     _PRO_FILE_PWD_PREPARE_SEPARATORS_ = $$system_path($$_PRO_FILE_PWD_)
     DESTDIR = $$_PRO_FILE_PWD_PREPARE_SEPARATORS_\\deploy\\packages\\proof\\data
     INSTALLERPATH = $$_PRO_FILE_PWD_PREPARE_SEPARATORS_\\bin

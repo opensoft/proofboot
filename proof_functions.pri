@@ -3,12 +3,9 @@ contains(QMAKE_SPEC_T,.*win.*) {
     win_host = 1
 }
 
-defineReplace(proof_plugin_dir_by_module) {
-    return ($$system_path(Proof/$$1))
-}
-
-defineReplace(proof_plugin_destdir_by_module) {
-    return ($$system_path($$BUILDPATH/imports/$$proof_plugin_dir_by_module($$1)))
+# Remove after full move to submodules (and to proof_qmlplugin.pri usage)
+defineReplace(proof_qmlplugin_destdir) {
+    return ($$system_path($$BUILDPATH/imports/Proof/$$1))
 }
 
 defineTest(add_proof_module_includes) {

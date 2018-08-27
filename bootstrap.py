@@ -19,7 +19,7 @@ def setup_parser():
     parser.add_argument('--boot-only', dest='boot_only', action='store_true',
                        help='Bootstrap only stuff from proofboot (doesn\'t work with --single-module)')
     parser.add_argument('--skip-private', dest='allow_private', action='store_false',
-                       help='Bootstrap without private parts')
+                       help='Bootstrap without private parts (private headers and qml files)')
     return parser
 
 def process_include_dir(src_path, dest_path, allow_private):
@@ -39,6 +39,24 @@ def process_include_dir(src_path, dest_path, allow_private):
         elif (entry_name[-2:] == ".h" or entry_name[-4:] == ".hpp") and (allow_private or (not "_p.h" in entry_name and not "_p.hpp" in entry_name)):
             shutil.copy2(entry.as_posix(), (dest_path/entry_name).as_posix())
 
+def process_qml_dir(src_path, dest_path):
+    global global_allow_private
+    if not global_allow_private:
+        return
+    if not src_path.exists():
+        print(src_path, "doesn't exist, skipping it")
+        return
+    if not dest_path.exists():
+        dest_path.mkdir(parents=True)
+    for entry in src_path.iterdir():
+        entry_name = entry.name
+        if entry_name[0] == ".":
+            continue
+        if entry.is_dir():
+            process_qml_dir(entry, dest_path/entry_name)
+        elif entry_name[-3:] == ".js" or entry_name[-4:] == ".qml" or entry_name == "qmldir":
+            shutil.copy2(entry.as_posix(), (dest_path/entry_name).as_posix())
+
 def copy_dir(src_path, dest_path):
     if not dest_path.exists():
         dest_path.mkdir(parents=True)
@@ -54,7 +72,13 @@ def copy_dir(src_path, dest_path):
 def process_module(src_module_path, dest_path):
     process_include_dir(src_module_path/"include", dest_path/"include", True)
     process_include_dir(src_module_path/"3rdparty", dest_path/"include/3rdparty", False)
+    process_qml_dir(src_module_path/"qml", dest_path/"qml")
     copy_dir(src_module_path/"features", dest_path/"features")
+    if (src_module_path/"android/common").exists():
+        copy_dir(src_module_path/"android/common", dest_path/"android")
+        copy_dir(src_module_path/"android/common", dest_path/"android/common")
+    if (src_module_path/"android/stations").exists():
+        copy_dir(src_module_path/"android/stations", dest_path/"android")
     extra_boot_path = src_module_path/"boot"
     if extra_boot_path.exists():
         for entry in extra_boot_path.iterdir():
@@ -76,7 +100,8 @@ def process_proofboot(sources_path, dest_path):
 
     print ("Copying project includes...")
     shutil.copy2((boot_path/"proof.pri").as_posix(), (dest_path/"proof.pri").as_posix())
-    shutil.copy2((boot_path/"proof_station.pri").as_posix(), (dest_path/"proof_station.pri").as_posix())
+    shutil.copy2((boot_path/"proof_app.pri").as_posix(), (dest_path/"proof_app.pri").as_posix())
+    shutil.copy2((boot_path/"proof_qmlplugin.pri").as_posix(), (dest_path/"proof_qmlplugin.pri").as_posix())
     shutil.copy2((boot_path/"proof_service.pri").as_posix(), (dest_path/"proof_service.pri").as_posix())
     shutil.copy2((boot_path/"proof_build_package.pri").as_posix(), (dest_path/"proof_build_package.pri").as_posix())
     shutil.copy2((boot_path/"proof_functions.pri").as_posix(), (dest_path/"proof_functions.pri").as_posix())
@@ -100,7 +125,7 @@ def process_gtest(sources_path, dest_path):
 def full_bootstrap(sources_path, dest_path):
     dest_headers_path = dest_path/"include"
 
-    for module in ("proofgui", "proofnetwork", "proofhardware", "proofpfs", "proofcv"):
+    for module in ("proofnetwork", "proofhardware", "proofpfs", "proofcv"):
         src_module_path = sources_path / module
         dest_module_path = dest_headers_path / module
         if not src_module_path.exists() or not src_module_path.is_dir():
@@ -113,13 +138,7 @@ def full_bootstrap(sources_path, dest_path):
     copy_dir(sources_path/"features", dest_path/"features")
     print ("Features copied.")
 
-    print ("Copying android stuff...")
-    copy_dir(sources_path/"android/common", dest_path/"android")
-    copy_dir(sources_path/"android/stations", dest_path/"android")
-    copy_dir(sources_path/"android/common", dest_path/"android/common")
-    print ("Android stuff copied.")
-
-    for module in ("proofseed", "proofbase", "proofutils", "proofnetworkjdf"):
+    for module in ("proofseed", "proofbase", "proofutils", "proofgui", "proofnetworkjdf"):
         src_module_path = sources_path / module
         if not src_module_path.exists() or not src_module_path.is_dir():
             continue
