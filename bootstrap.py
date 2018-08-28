@@ -125,7 +125,7 @@ def process_gtest(sources_path, dest_path):
 def full_bootstrap(sources_path, dest_path):
     dest_headers_path = dest_path/"include"
 
-    for module in ("proofnetwork", "proofhardware", "proofcv"):
+    for module in ("proofnetwork", "proofcv"):
         src_module_path = sources_path / module
         dest_module_path = dest_headers_path / module
         if not src_module_path.exists() or not src_module_path.is_dir():
@@ -134,11 +134,21 @@ def full_bootstrap(sources_path, dest_path):
         process_include_dir(src_module_path, dest_module_path, False)
         print (src_module_path, "done")
 
+    for module in ["proofhardware"]:
+        src_module_path = sources_path / (module + "_extra")
+        dest_module_path = dest_headers_path / module
+        if not src_module_path.exists() or not src_module_path.is_dir():
+            continue
+        print ("Processing", src_module_path, "...")
+        process_include_dir(src_module_path, dest_module_path, False)
+        print (src_module_path, "done")
+
+
     print ("Copying features...")
     copy_dir(sources_path/"features", dest_path/"features")
     print ("Features copied.")
 
-    for module in ("proofseed", "proofbase", "proofutils", "proofgui", "proofprofit", "proofnetworkjdf"):
+    for module in ("proofseed", "proofbase", "proofutils", "proofgui", "proofprofit", "proofnetworkjdf", "proofhardware"):
         src_module_path = sources_path / module
         if not src_module_path.exists() or not src_module_path.is_dir():
             continue
