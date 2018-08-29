@@ -148,7 +148,7 @@ def full_bootstrap(sources_path, dest_path):
     copy_dir(sources_path/"features", dest_path/"features")
     print ("Features copied.")
 
-    for module in ("proofseed", "proofbase", "proofutils", "proofgui", "proofprofit", "proofnetworkjdf", "proofhardware"):
+    for module in ("proofseed", "proofbase", "proofutils", "proofgui", "proofprofit", "proofnetworkjdf", "proofhardware", "proofscissorhands"):
         src_module_path = sources_path / module
         if not src_module_path.exists() or not src_module_path.is_dir():
             continue
