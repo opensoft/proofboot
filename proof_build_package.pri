@@ -11,9 +11,9 @@ win32: CONFIG(release, debug|release)  {
     INSTALLERPATH = $$_PRO_FILE_PWD_PREPARE_SEPARATORS_\\bin
 
     BINARYCREATORHELPTEXT = $$system("binarycreator")
-    !contains(BINARYCREATORHELPTEXT, -p|--packages): message("Qt\Tools\QtInstallerFramework\2.X\bin must be in PATH")
-    !exists($$DESTDIR/libeay32.dll): message("$$DESTDIR/libeay32.dll not found. Please put libeay32.dll to $$DESTDIR before run to build")
-    !exists($$DESTDIR/ssleay32.dll): message("$$DESTDIR/ssleay32.dll not found. Please put ssleay32.dll to $$DESTDIR before run to build")
+    !contains(BINARYCREATORHELPTEXT, -p|--packages): print_log("Qt\Tools\QtInstallerFramework\2.X\bin must be in PATH")
+    !exists($$DESTDIR/libeay32.dll): print_log("$$DESTDIR/libeay32.dll not found. Please put libeay32.dll to $$DESTDIR before run to build")
+    !exists($$DESTDIR/ssleay32.dll): print_log("$$DESTDIR/ssleay32.dll not found. Please put ssleay32.dll to $$DESTDIR before run to build")
 
     PROOFMODULES = $$find(CONFIG, proof)
     PROOFMODULES *= $$PACKAGEADDITIONALMODULES

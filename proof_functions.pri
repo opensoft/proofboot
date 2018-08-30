@@ -8,6 +8,10 @@ defineReplace(proof_qmlplugin_destdir) {
     return ($$system_path($$BUILDPATH/imports/Proof/$$1))
 }
 
+defineTest(print_log) {
+    !build_pass:log($$ARGS $$escape_expand(\\n))
+}
+
 defineTest(add_proof_module_includes) {
     MODULE_NAME = $$1
     contains(CONFIG, proof_internal):exists($$_PRO_FILE_PWD_/../proof.pro) {
@@ -57,7 +61,7 @@ defineTest(find_package) {
     } else:exists(/usr/local/lib/lib$$package*)|exists(/usr/lib/lib$$package*) {
         LIBS *=-l$$package
         DEFINES *= $$macro
-        message("$$TARGET: Package '$$package' probably found. Macro defined $$macro")
+        print_log("$$TARGET: Package '$$package' probably found. Macro defined $$macro")
         export(LIBS)
         export(DEFINES)
         return (true)
@@ -65,7 +69,7 @@ defineTest(find_package) {
 
     !equals(AVAILABILITY, "true") {
         contains(AVAILABILITY, "RequirementsFailure") {
-            message("$$TARGET: Not found '$$package': $$AVAILABILITY")
+            print_log("$$TARGET: Not found '$$package': $$AVAILABILITY")
             return (false)
         } else:!equals(AVAILABILITY, "") {
             REQ = "Requires: '$$AVAILABILITY'. "
@@ -75,7 +79,7 @@ defineTest(find_package) {
     CONFIG *= link_pkgconfig
     PKGCONFIG *= $$package
     DEFINES *= $$macro
-    message("$$TARGET: Package '$$package' found. $${REQ}Macro defined $$macro")
+    print_log("$$TARGET: Package '$$package' found. $${REQ}Macro defined $$macro")
 
     export(CONFIG)
     export(PKGCONFIG)
