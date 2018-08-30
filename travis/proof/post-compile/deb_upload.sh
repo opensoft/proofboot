@@ -3,7 +3,7 @@ set -e
 
 source proofboot/travis/detect_build_type.sh;
 if [ -n "$SKIP_UPLOAD" ]; then
-    -e "\033[1;33mSkipping artifact upload\033[0m";
+    echo -e "\033[1;33mSkipping artifact upload\033[0m";
     exit 0;
 fi
 

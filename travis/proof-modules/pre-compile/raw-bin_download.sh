@@ -18,6 +18,7 @@ for DEP in "${@:2}"; do
     tar --overwrite -xzf proof-bin.tar.gz;
     cp -uR -t $HOME/proof-bin proof-bin/*;
     rm -rf proof-bin proof-bin.tar.gz;
+    travis_time_finish;
 done;
 echo " ";
 
