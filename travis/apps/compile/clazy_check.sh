@@ -43,5 +43,10 @@ if [ -f "$HOME/builder_logs/raw_errors.log" ]; then
     echo "$ cat \"$HOME/builder_logs/raw_errors.log\" | grep -v 'internal error' > \"$HOME/builder_logs/errors.log\"";
     (cat "$HOME/builder_logs/raw_errors.log" | grep -v 'internal error' > "$HOME/builder_logs/errors.log") || true;
 fi
-# Remove || true from here when all apps will be clazy-compatible
-travis_time_finish && travis_fold end "build.compile" && $HOME/proof-bin/dev-tools/travis/check_for_errorslog.sh compilation || true;
+travis_time_finish && travis_fold end "build.compile";
+
+if [ -n "$CLAZY_WARNINGS_ALLOWED" ]; then
+    $HOME/proof-bin/dev-tools/travis/check_for_errorslog.sh compilation || true;
+else
+    $HOME/proof-bin/dev-tools/travis/check_for_errorslog.sh compilation;
+fi
