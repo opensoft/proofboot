@@ -54,3 +54,31 @@ echo "$ tar -czf package-$TARGET_NAME.tar.gz package-$TARGET_NAME && mv /sandbox
 docker exec -t builder bash -c "tar -czf package-$TARGET_NAME.tar.gz package-$TARGET_NAME && mv /sandbox/package-$TARGET_NAME.tar.gz /sandbox/build/package-$TARGET_NAME.tar.gz";
 travis_time_finish && travis_fold end "build.install" && $HOME/proof-bin/dev-tools/travis/check_for_errorslog.sh "make install" || true;
 echo " ";
+
+if [ -f ${TARGET_NAME}_tests.pro ]; then
+    travis_fold start "prepare.docker_tests" && travis_time_start;
+    echo -e "\033[1;33mStarting Docker container for tests...\033[0m";
+    sudo rm -rf $HOME/tests_build && mkdir $HOME/tests_build;
+    docker run -id --name tests_builder -w="/sandbox" -e "PROOF_PATH=/sandbox/proof-bin" -e "QMAKEFEATURES=/sandbox/proof-bin/features" \
+        -v $(pwd):/sandbox/target_src -v $HOME/proof-bin:/sandbox/proof-bin -v $HOME/builder_logs:/sandbox/logs \
+        -v $HOME/builder_ccache:/root/.ccache -v $HOME/tests_build:/sandbox/build $DOCKER_IMAGE tail -f /dev/null;
+    docker ps;
+    travis_time_finish && travis_fold end "prepare.docker_tests";
+    echo " ";
+
+    travis_fold start "build.qmake_tests" && travis_time_start;
+    echo -e "\033[1;33mRunning qmake for tests...\033[0m";
+    echo "$ qmake -r 'QMAKE_CXXFLAGS += -ferror-limit=0 -fcolor-diagnostics' ../target_src/${TARGET_NAME}_tests.pro";
+    docker exec -t tests_builder bash -c "exec 3>&1; set -o pipefail; rm -rf /sandbox/logs/*; cd build; \
+        qmake -r 'QMAKE_CXXFLAGS += -ferror-limit=0 -fcolor-diagnostics' \
+        ../target_src/${TARGET_NAME}_tests.pro 2>&1 1>&3 | (tee /sandbox/logs/errors.log 1>&2)";
+    travis_time_finish && travis_fold end "build.qmake_tests" && $HOME/proof-bin/dev-tools/travis/check_for_errorslog.sh qmake || true;
+    echo " ";
+
+    travis_fold start "build.compile_tests" && travis_time_start;
+    echo -e "\033[1;33mCompiling tests...\033[0m";
+    echo "$ make -j4";
+    docker exec -t tests_builder bash -c "exec 3>&1; set -o pipefail; rm -rf /sandbox/logs/*; cd build; make -j4 2>&1 1>&3 | (tee /sandbox/logs/errors.log 1>&2)";
+    travis_time_finish && travis_fold end "build.compile_tests" && $HOME/proof-bin/dev-tools/travis/check_for_errorslog.sh compilation || true;
+    echo " ";
+fi
