@@ -42,8 +42,8 @@ echo " ";
 
 travis_fold start "prepare.dirs" && travis_time_start;
 echo -e "\033[1;33mPreparing dirs structure...\033[0m";
-echo "$ mv build/package-$TARGET_NAME.tar.gz ./ && tar -xzf package-$TARGET_NAME.tar.gz";
-docker exec -t builder bash -c "mv build/package-$TARGET_NAME.tar.gz ./ && tar -xzf package-$TARGET_NAME.tar.gz";
+echo "$ cp build/package-$TARGET_NAME.tar.gz ./ && tar -xzf package-$TARGET_NAME.tar.gz";
+docker exec -t builder bash -c "cp build/package-$TARGET_NAME.tar.gz ./ && tar -xzf package-$TARGET_NAME.tar.gz";
 travis_time_finish && travis_fold end "prepare.dirs";
 echo " ";
 
