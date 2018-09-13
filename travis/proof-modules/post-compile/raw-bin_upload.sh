@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-source $HOME/proof-bin/travis/detect_build_type.sh;
+source $HOME/proof-bin/dev-tools/travis/detect_build_type.sh;
 if [ -n "$SKIP_UPLOAD" ]; then
     echo -e "\033[1;33mSkipping artifact upload\033[0m";
     exit 0;

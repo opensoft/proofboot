@@ -17,7 +17,8 @@ docker pull $DOCKER_IMAGE:latest;
 docker run -id --name builder -w="/sandbox" -e "PROOF_PATH=/sandbox/proof-bin" -e "QMAKEFEATURES=/sandbox/proof-bin/features" \
     -v /usr/local/android-sdk:/opt/android/sdk \
     -v $(pwd):/sandbox/target_src -v $HOME/proof-bin:/sandbox/proof-bin -v $HOME/builder_logs:/sandbox/logs \
-    -v $HOME/builder_ccache:/root/.ccache -v $HOME/full_build:/sandbox/full_build $DOCKER_IMAGE tail -f /dev/null;
+    -v $HOME/builder_ccache:/root/.ccache -v $HOME/full_build:/sandbox/full_build \
+    -v $HOME/builder_gradle:/root/.gradle -v $HOME/builder_android:/root/.android $DOCKER_IMAGE tail -f /dev/null;
 docker ps;
 travis_time_finish && travis_fold end "prepare.docker";
 echo " ";

@@ -18,5 +18,5 @@ echo " ";
 
 travis_time_start;
 echo -e "\033[1;33mRunning tests...\033[0m";
-$HOME/proof-bin/travis/proof-modules/unit-tests/proof_tests_runner.py "$@";
+$HOME/proof-bin/dev-tools/travis/proof-modules/unit-tests/proof_tests_runner.py "$@";
 travis_time_finish

@@ -23,15 +23,6 @@ tar -xzf bin.tar.gz;
 mv bin proof-bin;
 travis_time_finish;
 
-travis_fold start "prepare.dev_tools_copy" && travis_time_start;
-echo -e "\033[1;33mAdding dev-tools, deploy and VERSION...\033[0m";
-mkdir proof-bin/dev-tools;
-cp -vR $TRAVIS_BUILD_DIR/proofboot/travis proof-bin/dev-tools/travis;
-cp -vR $TRAVIS_BUILD_DIR/deploy proof-bin/deploy;
-echo $PROOF_VERSION > proof-bin/VERSION;
-travis_time_finish && travis_fold end "prepare.dev_tools_copy";
-echo -e "\033[1;35mVERSION:\033[0m" && cat proof-bin/VERSION;
-
 travis_time_start;
 echo -e "\033[1;33mRemoving tests and examples stuff...\033[0m";
 rm -rf proof-bin/tools proof-bin/tests proof-bin/examples;

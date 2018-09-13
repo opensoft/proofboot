@@ -22,7 +22,7 @@ echo -e "\033[1;33mBootstrapping...\033[0m";
 echo "$ bin/bootstrap.py --src $TARGET_NAME --dest bin --single-module";
 docker exec -t builder bash -c "exec 3>&1; set -o pipefail; rm -rf /sandbox/logs/*; \
     bin/bootstrap.py --src $TARGET_NAME --dest bin --single-module 2>&1 1>&3 | (tee /sandbox/logs/errors.log 1>&2)";
-travis_time_finish && travis_fold end "build.bootstrap" && $HOME/proof-bin/travis/check_for_errorslog.sh bootstrap || true;
+travis_time_finish && travis_fold end "build.bootstrap" && $HOME/proof-bin/dev-tools/travis/check_for_errorslog.sh bootstrap || true;
 echo " ";
 
 travis_fold start "build.qmake" && travis_time_start;
@@ -32,7 +32,7 @@ docker exec -t builder bash -c "exec 3>&1; set -o pipefail; rm -rf /sandbox/logs
     qmake -r 'QMAKE_CXX=clazy' 'DEFINES += STATIC_CODE_CHECK_BUILD' \
     'QMAKE_CXXFLAGS += -ferror-limit=0 -fcolor-diagnostics $ISYSTEM -Xclang -plugin-arg-clang-lazy -Xclang $CLAZY_CHECKS' \
     ../$TARGET_NAME/$TARGET_NAME.pro 2>&1 1>&3 | (tee /sandbox/logs/errors.log 1>&2)";
-travis_time_finish && travis_fold end "build.qmake" && $HOME/proof-bin/travis/check_for_errorslog.sh qmake || true;
+travis_time_finish && travis_fold end "build.qmake" && $HOME/proof-bin/dev-tools/travis/check_for_errorslog.sh qmake || true;
 echo " ";
 
 travis_fold start "build.compile" && travis_time_start;
@@ -43,7 +43,7 @@ if [ -f "$HOME/builder_logs/raw_errors.log" ]; then
     echo "$ cat \"$HOME/builder_logs/raw_errors.log\" | grep -v 'internal error' > \"$HOME/builder_logs/errors.log\"";
     (cat "$HOME/builder_logs/raw_errors.log" | grep -v 'internal error' > "$HOME/builder_logs/errors.log") || true;
 fi
-travis_time_finish && travis_fold end "build.compile" && $HOME/proof-bin/travis/check_for_errorslog.sh compilation;
+travis_time_finish && travis_fold end "build.compile" && $HOME/proof-bin/dev-tools/travis/check_for_errorslog.sh compilation;
 
 if [ -f ${TARGET_NAME}_plugins.pro ]; then
     travis_fold start "build.qmake_plugins" && travis_time_start;
@@ -53,7 +53,7 @@ if [ -f ${TARGET_NAME}_plugins.pro ]; then
         qmake -r 'QMAKE_CXX=clazy' 'DEFINES += STATIC_CODE_CHECK_BUILD' \
         'QMAKE_CXXFLAGS += -ferror-limit=0 -fcolor-diagnostics $ISYSTEM -Xclang -plugin-arg-clang-lazy -Xclang $CLAZY_CHECKS' \
         ../$TARGET_NAME/${TARGET_NAME}_plugins.pro 2>&1 1>&3 | (tee /sandbox/logs/errors.log 1>&2)";
-    travis_time_finish && travis_fold end "build.qmake_plugins" && $HOME/proof-bin/travis/check_for_errorslog.sh qmake || true;
+    travis_time_finish && travis_fold end "build.qmake_plugins" && $HOME/proof-bin/dev-tools/travis/check_for_errorslog.sh qmake || true;
     echo " ";
 
     travis_fold start "build.compile_plugins" && travis_time_start;
@@ -64,6 +64,6 @@ if [ -f ${TARGET_NAME}_plugins.pro ]; then
         echo "$ cat \"$HOME/builder_logs/raw_errors.log\" | grep -v 'internal error' > \"$HOME/builder_logs/errors.log\"";
         (cat "$HOME/builder_logs/raw_errors.log" | grep -v 'internal error' > "$HOME/builder_logs/errors.log") || true;
     fi
-    travis_time_finish && travis_fold end "build.compile_plugins" && $HOME/proof-bin/travis/check_for_errorslog.sh compilation;
+    travis_time_finish && travis_fold end "build.compile_plugins" && $HOME/proof-bin/dev-tools/travis/check_for_errorslog.sh compilation;
     echo " ";
 fi

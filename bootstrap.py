@@ -94,9 +94,18 @@ def process_proofboot(sources_path, dest_path):
     copy_dir(boot_path/"features", dest_path/"features")
     print ("Features copied.")
 
+    dest_dev_tools_path = dest_path/"dev-tools"
+
+    if not dest_dev_tools_path.exists():
+        dest_dev_tools_path.mkdir(parents=True)
+
     print ("Copying travis related stuff...")
-    copy_dir(boot_path/"travis", dest_path/"travis")
+    copy_dir(boot_path/"travis", dest_dev_tools_path/"travis")
     print ("Travis stuff copied.")
+
+    print ("Copying deployment stuff...")
+    copy_dir(boot_path/"deploy", dest_dev_tools_path/"deploy")
+    print ("Deployment stuff copied.")
 
     print ("Copying project includes...")
     shutil.copy2((boot_path/"proof.pri").as_posix(), (dest_path/"proof.pri").as_posix())

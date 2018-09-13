@@ -48,8 +48,8 @@ echo " ";
 
 travis_fold start "build.install" && travis_time_start;
 echo -e "\033[1;33mMake install...\033[0m";
-echo "$ mkdir -p /sandbox/package-$TARGET_NAME/opt/Opensoft/proof/bin && cd /sandbox/build && make install";
-docker exec -t builder bash -c "mkdir -p /sandbox/package-$TARGET_NAME/opt/Opensoft/proof/bin && cd /sandbox/build && make install";
+echo "$ mkdir -p /sandbox/package-$TARGET_NAME/opt/Opensoft/$TARGET_NAME/bin && cd /sandbox/build && make install";
+docker exec -t builder bash -c "mkdir -p /sandbox/package-$TARGET_NAME/opt/Opensoft/$TARGET_NAME/bin && cd /sandbox/build && make install";
 echo "$ tar -czf package-$TARGET_NAME.tar.gz package-$TARGET_NAME && mv /sandbox/package-$TARGET_NAME.tar.gz /sandbox/build/package-$TARGET_NAME.tar.gz";
 docker exec -t builder bash -c "tar -czf package-$TARGET_NAME.tar.gz package-$TARGET_NAME && mv /sandbox/package-$TARGET_NAME.tar.gz /sandbox/build/package-$TARGET_NAME.tar.gz";
 travis_time_finish && travis_fold end "build.install" && $HOME/proof-bin/dev-tools/travis/check_for_errorslog.sh "make install" || true;

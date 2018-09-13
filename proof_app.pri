@@ -17,13 +17,12 @@ RCC_DIR = $$OBJECTS_DIR
 DEFINES += APP_VERSION=\\\"$${VERSION}\\\"
 
 linux:!android {
-    target.path = $$PREFIX/opt/Opensoft/proof/bin/
-    rename_target.path = $$PREFIX/opt/Opensoft/proof/bin/
-    rename_target.files = $$PREFIX/opt/Opensoft/proof/bin/$$TARGET
-    rename_target.extra = mv $$PREFIX/opt/Opensoft/proof/bin/$$TARGET $$PREFIX/opt/Opensoft/proof/bin/$$TARGET-bin
-    target_link.path = $$PREFIX/opt/Opensoft/proof/bin/
-    target_link.commands = cd $$PREFIX/opt/Opensoft/proof/bin/ && ln -s ./proof-wrapper $$TARGET
+    target.path = $$PREFIX/opt/Opensoft/$$TARGET/bin/
+    rename_target.path = $$PREFIX/opt/Opensoft/$$TARGET/bin/
+    rename_target.commands = \
+        mv $$PREFIX/opt/Opensoft/$$TARGET/bin/$$TARGET $$PREFIX/opt/Opensoft/$$TARGET/bin/$$TARGET-bin \
+        && cp $$(PROOF_PATH)/dev-tools/deploy/debian/proof-wrapper $$PREFIX/opt/Opensoft/$$TARGET/bin/$$TARGET
+    rename_target.depends = install_target # qmake adds install_ prefix to then
     INSTALLS += target
     INSTALLS += rename_target
-    INSTALLS += target_link
 }

@@ -11,7 +11,7 @@ APP_VERSION="$(grep -e 'VERSION\ =' $TARGET_NAME.pro | sed 's/^VERSION\ =\ \(.*\
 
 echo -e "\033[1;32mApp version: $APP_VERSION\033[0m";
 if [ -n "$RELEASE_BUILD" ]; then
-    echo -e "\033[1;32mWill be uploaded as release to __releases/$TARGET_NAME/$TARGET_NAME-$APP_VERSION.deb\033[0m";
+    echo -e "\033[1;32mWill be uploaded as release to __releases/$TARGET_NAME folder\033[0m";
 else
     echo -e "\033[1;32mWill be uploaded to $TRAVIS_BRANCH/$TARGET_NAME-$APP_VERSION-$TRAVIS_BRANCH.deb\033[0m";
 fi
@@ -27,7 +27,7 @@ travis_fold start "prepare.docker" && travis_time_start;
 echo -e "\033[1;33mDownloading and starting Docker container...\033[0m";
 docker pull opensoftdev/proof-builder-base:latest;
 docker run -id --name builder -w="/sandbox" -v $(pwd):/sandbox/target_src -v $HOME/full_build:/sandbox/build -v $HOME/proof-bin:/opt/Opensoft/proof \
-    -e "BUILD_ROOT=/sandbox/build" -e "PACKAGE_ROOT=/sandbox/package-$TARGET_NAME" -e "SKIP_BUILD_FOR_DEB_PACKAGE=true" \
+    -e "BUILD_ROOT=/sandbox/build" -e "PACKAGE_ROOT=/sandbox/package-$TARGET_NAME" -e "SKIP_BUILD_FOR_DEB_PACKAGE=true" -e "TARGET_NAME=$TARGET_NAME" \
     -e "PROOF_PATH=/opt/Opensoft/proof" -e "QMAKEFEATURES=/opt/Opensoft/proof/features" \
     opensoftdev/proof-builder-base tail -f /dev/null;
 docker ps;
@@ -49,16 +49,22 @@ echo " ";
 
 travis_fold start "pack.deb" && travis_time_start;
 echo -e "\033[1;33mCreating deb package...\033[0m";
-echo "$ /opt/Opensoft/proof/deploy/deb/build-deb-package -f /sandbox/target_src/Manifest /sandbox/target_src";
-docker exec -t builder bash -c "/opt/Opensoft/proof/deploy/deb/build-deb-package -f /sandbox/target_src/Manifest /sandbox/target_src";
+echo "$ /opt/Opensoft/proof/dev-tools/deploy/debian/build_deb_package.sh -f /sandbox/target_src/Manifest /sandbox/target_src";
+docker exec -t builder bash -c "/opt/Opensoft/proof/dev-tools/deploy/debian/build_deb_package.sh -f /sandbox/target_src/Manifest /sandbox/target_src";
 travis_time_finish && travis_fold end "pack.deb";
 echo " ";
+
+DEB_FILENAME=`find -maxdepth 1 -name "$TARGET_NAME-*.deb" -print -quit`
+if [ -z  "$DEB_FILENAME" ]; then
+    echo -e "\033[1;31mCan't find created deb package, halting\033[0m";
+    exit 1
+fi
 
 travis_time_start;
 echo -e "\033[1;33mUploading to AWS S3...\033[0m";
 if [ -n "$RELEASE_BUILD" ]; then
-    $HOME/proof-bin/dev-tools/travis/s3_upload.sh $TARGET_NAME-$APP_VERSION.deb __releases/$TARGET_NAME $TARGET_NAME-$APP_VERSION.deb;
+    $HOME/proof-bin/dev-tools/travis/s3_upload.sh "$DEB_FILENAME" __releases/$TARGET_NAME "$DEB_FILENAME";
 else
-    $HOME/proof-bin/dev-tools/travis/s3_upload.sh $TARGET_NAME-$APP_VERSION.deb $TRAVIS_BRANCH $TARGET_NAME-$APP_VERSION-$TRAVIS_BRANCH.deb;
+    $HOME/proof-bin/dev-tools/travis/s3_upload.sh "$DEB_FILENAME" $TRAVIS_BRANCH $TARGET_NAME-$APP_VERSION-$TRAVIS_BRANCH.deb;
 fi
 travis_time_finish

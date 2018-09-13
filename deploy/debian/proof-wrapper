@@ -1,0 +1,5 @@
+#!/bin/bash
+APP_NAME=`basename $0`
+export PROOF_PATH="/opt/Opensoft/$APP_NAME"
+export LD_LIBRARY_PATH="$PROOF_PATH/lib"
+exec "$PROOF_PATH/bin/${APP_NAME}-bin" $1 $2 $3 $4 $5 $6 $7 $8 $9
