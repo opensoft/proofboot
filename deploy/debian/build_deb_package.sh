@@ -119,24 +119,26 @@ else
 fi
 
 "$ROOT/copy_proof_libs.sh" "$APP_ROOT" "$PROJECT_DIR"
-strip -v `find "$APP_ROOT" -type f \( -name "*-bin" -o -name "*.so" \)`
+strip -v `find "$APP_ROOT" -type f \( -name "*-bin" -o -name "*.so*" \)`
 
 if [ -z "$DEPENDS" ]; then
     # We don't need any system qt/qca stuff
     # We also don't need proof since we are copying it to app
-    export IGNORE_PACKAGES_PATTERN="^libqt:^libqca:^qml-module:fglrx:proof:$IGNORE_PACKAGES_PATTERN";
-    export VERSION_CHECK_PATTERN="qt5-opensoft:qca-opensoft:opencv-opensoft:$VERSION_CHECK_PATTERN";
-    DEPENDS="`"$ROOT/extract_deb_dependencies.sh" "$PACKAGE_ROOT" | paste -s -d,`"
+    export IGNORE_PACKAGES_PATTERN="^libqt:^libqca:^qml-module:fglrx:^proof:$IGNORE_PACKAGES_PATTERN";
+    export VERSION_CHECK_PATTERN="qt5-opensoft:qca-opensoft:opencv-opensoft:qrencode:$VERSION_CHECK_PATTERN";
+    DEPENDS="`"$ROOT/extract_app_dependencies.sh" "$PACKAGE_ROOT" | paste -s -d,`"
 fi
 echo "Depends found: $DEPENDS"
 
+if [ -z "$DEPENDS" ]; then
+    DEPENDS="sudo,resolvconf"
+else
+    DEPENDS="sudo,resolvconf,$DEPENDS"
+fi
+
 if [ -n "$EXTRA_DEPENDS" ]; then
     echo "Adding extra depends from Manifest: $EXTRA_DEPENDS"
-    if [ -z "$DEPENDS" ]; then
-        DEPENDS="$EXTRA_DEPENDS"
-    else
-        DEPENDS="$DEPENDS,$EXTRA_DEPENDS"
-    fi
+    DEPENDS="$DEPENDS,$EXTRA_DEPENDS"
 fi
 
 SUGGESTS=openvpn
@@ -161,7 +163,7 @@ cat << EOT > "$PACKAGE_ROOT/DEBIAN/control"
 Package: $PACKAGE_NAME
 Version: $VERSION
 Section: misc
-Depends: sudo,resolvconf,$DEPENDS
+Depends: $DEPENDS
 Suggests: $SUGGESTS
 Recommends: $RECOMMENDS
 Architecture: amd64
