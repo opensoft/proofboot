@@ -3,11 +3,6 @@ contains(QMAKE_SPEC_T,.*win.*) {
     win_host = 1
 }
 
-# Remove after full move to submodules (and to proof_qmlplugin.pri usage)
-defineReplace(proof_qmlplugin_destdir) {
-    return ($$system_path($$BUILDPATH/imports/Proof/$$1))
-}
-
 defineTest(print_log) {
     !build_pass:log($$ARGS $$escape_expand(\\n))
 }
@@ -19,14 +14,8 @@ defineTest(add_proof_module_includes) {
         INCLUDEPATH *= $$clean_path($$system_path($$_PRO_FILE_PWD_/../$$MODULE_NAME/include))
         INCLUDEPATH *= $$clean_path($$system_path($$_PRO_FILE_PWD_/../$$MODULE_NAME/include/private))
         export(INCLUDEPATH)
-    } else:contains(CONFIG, proof_internal):exists($$_PRO_FILE_PWD_/../../proof.pro) {
-# TODO: remove after full switch to submodules
-        INCLUDEPATH *= $$clean_path($$system_path($$_PRO_FILE_PWD_/../../$$MODULE_NAME))
-        INCLUDEPATH *= $$clean_path($$system_path($$_PRO_FILE_PWD_/../../$$MODULE_NAME/include))
-        INCLUDEPATH *= $$clean_path($$system_path($$_PRO_FILE_PWD_/../../$$MODULE_NAME/include/private))
-        export(INCLUDEPATH)
     } else:contains(CONFIG, proof_internal):exists($$_PRO_FILE_PWD_/../../../proof.pro) {
-# TODO: remove after full switch to submodules
+# This one is for plugins
         INCLUDEPATH *= $$clean_path($$system_path($$_PRO_FILE_PWD_/../../../$$MODULE_NAME))
         INCLUDEPATH *= $$clean_path($$system_path($$_PRO_FILE_PWD_/../../../$$MODULE_NAME/include))
         INCLUDEPATH *= $$clean_path($$system_path($$_PRO_FILE_PWD_/../../../$$MODULE_NAME/include/private))

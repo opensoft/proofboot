@@ -29,6 +29,4 @@ INCLUDEPATH *= $$clean_path($$system_path($$PWD/include))
 INCLUDEPATH *= $$clean_path($$system_path($$PWD/include/private))
 INCLUDEPATH *= $$clean_path($$system_path($$_PRO_FILE_PWD_/include))
 INCLUDEPATH *= $$clean_path($$system_path($$_PRO_FILE_PWD_/include/private))
-# TODO: remove after full switch to submodules
-INCLUDEPATH *= $$clean_path($$system_path($$PWD/..))
 android:QT += androidextras

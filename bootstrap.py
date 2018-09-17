@@ -132,21 +132,6 @@ def process_gtest(sources_path, dest_path):
     print ("Google Test includes copied.")
 
 def full_bootstrap(sources_path, dest_path):
-    dest_headers_path = dest_path/"include"
-
-    for module in ["proofnetwork"]:
-        src_module_path = sources_path / module
-        dest_module_path = dest_headers_path / module
-        if not src_module_path.exists() or not src_module_path.is_dir():
-            continue
-        print ("Processing", src_module_path, "...")
-        process_include_dir(src_module_path, dest_module_path, False)
-        print (src_module_path, "done")
-
-    print ("Copying features...")
-    copy_dir(sources_path/"features", dest_path/"features")
-    print ("Features copied.")
-
     for module in ("proofseed", "proofbase", "proofutils", "proofgui", "proofprofit", "proofnetworkjdf", "proofnetworkonp", "proofnetworkmms", "proofnetworktracker", "proofhardware", "proofscissorhands", "proofcv", "proofhardwareslitter"):
         src_module_path = sources_path / module
         if not src_module_path.exists() or not src_module_path.is_dir():
@@ -168,10 +153,6 @@ def main():
     if not dest_path.exists():
         dest_path.mkdir(parents=True)
     dest_path = dest_path.resolve()
-
-    dest_headers_path = dest_path/"include"
-    if not dest_headers_path.exists():
-        dest_headers_path.mkdir(parents=True)
 
     if not sources_path.exists() or not sources_path.is_dir():
         print (sources_path, " doesn't exist")
