@@ -1,1 +1,8 @@
 #!/bin/sh
+
+RESTARTER_PATH=##APP_RESTARTER_PATH##
+
+if [ "$1" = "upgrade" ] && [ ! -f "$RESTARTER_PATH"/down ]; then
+    mkdir -p $RESTARTER_PATH;
+    touch "$RESTARTER_PATH"/down_should_be_removed
+fi

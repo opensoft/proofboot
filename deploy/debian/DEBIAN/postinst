@@ -1,5 +1,12 @@
 #!/bin/sh
 
+RESTARTER_PATH=##APP_RESTARTER_PATH##
+
+if [ -f "$RESTARTER_PATH"/down_should_be_removed ]; then
+    rm -f "$RESTARTER_PATH"/down || true
+fi
+rm -f "$RESTARTER_PATH"/down_should_be_removed || true
+
 if ! id -u "proof" >/dev/null 2>&1; then
         adduser --system --group --home /home/proof --shell /bin/bash proof
 fi
