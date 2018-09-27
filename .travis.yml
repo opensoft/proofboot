@@ -18,4 +18,4 @@ script:
   - tar -czf proof-bin.tar.gz proof-bin
   - aws s3 cp proof-bin.tar.gz s3://proof.travis.builds/$TRAVIS_BRANCH/raw-bin/${TARGET_NAME}-bin-android.tar.gz || travis_terminate 1
   - aws s3 cp proof-bin.tar.gz s3://proof.travis.builds/$TRAVIS_BRANCH/raw-bin/${TARGET_NAME}-bin-debian9.tar.gz || travis_terminate 1
-  - travis/ping_dependants.sh "opensoft/proof-gtest"
+  - travis/ping_dependants.sh

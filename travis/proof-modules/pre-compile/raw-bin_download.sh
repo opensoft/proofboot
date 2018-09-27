@@ -35,8 +35,13 @@ echo " ";
 
 PLATFORM=$1;
 
+if [ ! -f proofmodule.json ]; then
+    echo -e "\033[1;31mproofmodule.json not found!\033[0m";
+    exit 1;
+fi
+
 mkdir __dependencies && cd __dependencies;
-for DEP in "${@:2}"; do
+for DEP in `jq -rM "if (keys | contains([\"depends_${PLATFORM}\"])) then .depends_${PLATFORM}[] else .depends[] end" ../proofmodule.json | tr -s '\r\n' '\n'`; do
     travis_time_start;
     echo -e "\033[1;33mDownloading $DEP...\033[0m";
     aws s3 cp s3://proof.travis.builds/$TRAVIS_BRANCH/raw-bin/$DEP-bin-$PLATFORM.tar.gz proof-bin.tar.gz \

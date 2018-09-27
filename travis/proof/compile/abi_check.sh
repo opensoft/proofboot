@@ -61,13 +61,104 @@ echo "$ make -j4";
 docker exec -t builder bash -c "exec 3>&1; set -o pipefail; rm -rf /sandbox/logs/*; cd build; make -j4 2>&1 1>&3 | (tee /sandbox/logs/errors.log 1>&2)";
 travis_time_finish && travis_fold end "build.compile" && proofboot/travis/check_for_errorslog.sh compilation || true;
 
-travis_fold start "prepare.abi_dump" && travis_time_start;
-echo -e "\033[1;33mRunning clang-format...\033[0m";
-docker exec -t codestyle-check bash -c "find -iname '*.h' -o -iname '*.cpp' | grep -v 3rdparty | grep -v gtest | xargs clang-format -i";
-travis_time_finish && travis_fold end "check.format";
-echo " ";
+PROOF_VERSION=`proofboot/travis/grep_proof_version.sh proofboot`
 
-echo -e "\033[1;35m$ git diff --shortstat:\033[0m" && git diff --shortstat;
-echo -e "\033[1;35m$ git diff:\033[0m" && git diff;
+ABI_ISSUES=""
+API_ISSUES=""
 
-exit `git diff | wc -l`
+for module in `find * -name proofmodule.json`; do
+    LIBRARIES=`docker exec -t builder jq -rM '.libraries[].name' "/sandbox/proof/$module" | tr -s '\r\n' '\n'`;
+    for library in $LIBRARIES; do
+        travis_fold start "abi_check.dump" && travis_time_start;
+        echo -e "\033[1;33mPreparing ABI dump for $library from $module...\033[0m";
+        docker exec -t builder rm -f abi_dumper_includes.list || true;
+        HEADERS_SUBDIR=`docker exec -t builder jq -rM ".libraries[] | select(.name == \"$library\") | .headers_subdir" "/sandbox/proof/$module" | tr -s '\r\n' '\n'`;
+        DUMP_FILENAME="${library}-${PROOF_VERSION}.dump";
+        if [ "$TRAVIS_PULL_REQUEST" == "false" ] && [ "$TRAVIS_BRANCH" == "master" ]; then
+            DUMP_FILENAME="${library}-master.dump";
+        fi
+        echo "$ find \"/sandbox/bin/include/$HEADERS_SUBDIR\" -name '*.h' | sort | uniq > abi_dumper_includes.list";
+        docker exec -t builder bash -c "find \"/sandbox/bin/include/$HEADERS_SUBDIR\" -name '*.h' | sort | uniq > abi_dumper_includes.list";
+        echo "$ abi-dumper \"/sandbox/bin/lib/lib$library.so\" -o \"/sandbox/proof/${DUMP_FILENAME}\" -skip-cxx -dir -lambda -lver \"$PROOF_VERSION\" -ld-library-path /opt/Opensoft/Qt/lib:/sandbox/bin/lib -public-headers abi_dumper_includes.list";
+        docker exec -t builder abi-dumper "/sandbox/bin/lib/lib$library.so" -o "/sandbox/proof/${DUMP_FILENAME}" -skip-cxx -dir -lambda \
+            -lver "$PROOF_VERSION" -ld-library-path /opt/Opensoft/Qt/lib:/sandbox/bin/lib -public-headers abi_dumper_includes.list;
+        travis_time_finish && travis_fold end "abi_check.dump";
+
+        if [ "$TRAVIS_PULL_REQUEST" != "false" ] || [ "$TRAVIS_BRANCH" != "master" ]; then
+            aws s3 cp "s3://proof.travis.builds/__abi-dumps/${library}-master.dump.gz" "${library}-master.dump.gz" || true;
+            if [ -f "${library}-master.dump.gz" ]; then
+                travis_fold start "abi_check.compare" && travis_time_start;
+                echo -e "\033[1;Comparing ABI dump for $library from $module with reference from master branch...\033[0m";
+                echo "$ gzip -d \"${library}-master.dump.gz\"";
+                gzip -d "${library}-master.dump.gz";
+                echo "$ abi-compliance-checker -l \"$library\" -old \"${library}-master.dump\" -new \"${library}-${PROOF_VERSION}.dump\" -ext -list-affected";
+                COMPARE_RESULTS=`docker exec -t builder abi-compliance-checker -l "$library" -old "${library}-master.dump" -new "${library}-${PROOF_VERSION}.dump" -ext -list-affected || true`;
+                echo "$COMPARE_RESULTS";
+                RESULTS_DIR=`echo "$COMPARE_RESULTS" | sed -nE 's|Report: (.+)/.*\.html|\1|p'`;
+                travis_time_finish && travis_fold end "abi_check.compare";
+
+                if [ `echo "$COMPARE_RESULTS" | sed -nE 's|Total binary compatibility problems: ([0-9]+).*|\1|p'` -ne 0 ]; then
+                    echo -e "\033[1;31mABI issues found:\033[0m";
+                    CURRENT_ISSUES=`docker exec -t builder c++filt @"$RESULTS_DIR/abi_affected.txt"`;
+                    echo "$CURRENT_ISSUES";
+                    ABI_ISSUES=`( echo "$ABI_ISSUES"; echo "$library:"; echo "$CURRENT_ISSUES"; echo )`;
+                fi
+                if [ `echo "$COMPARE_RESULTS" | sed -nE 's|Total source compatibility problems: ([0-9]+).*|\1|p'` -ne 0 ]; then
+                    echo -e "\033[1;31mAPI issues found:\033[0m";
+                    CURRENT_ISSUES=`docker exec -t builder c++filt @"$RESULTS_DIR/src_affected.txt"`;
+                    echo "$CURRENT_ISSUES";
+                    API_ISSUES=`( echo "$API_ISSUES"; echo "$library:"; echo "$CURRENT_ISSUES"; echo )`;
+                fi
+                docker exec -t builder rm -rf "$RESULTS_DIR" || true;
+            else
+            fi
+        fi
+    done
+done
+
+if [ "$TRAVIS_PULL_REQUEST" == "false" ] && [ "$TRAVIS_BRANCH" == "master" ]; then
+    travis_fold start "abi_check.upload_master_dump" && travis_time_start;
+    echo -e "\033[1;33mSending dump references to S3...\033[0m";
+    for dump_file in *.dump; do
+        echo "$ gzip \"$dump_file\"";
+        gzip "$dump_file";
+        echo "$ aws s3 cp \"${dump_file}.gz\" \"s3://proof.travis.builds/__abi-dumps/${dump_file}.gz\"";
+        aws s3 cp "${dump_file}.gz" "s3://proof.travis.builds/__abi-dumps/${dump_file}.gz";
+    done
+    travis_time_finish && travis_fold end "abi_check.upload_master_dump";
+fi
+
+if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then
+    travis_fold start "abi_check.pr_comment" && travis_time_start;
+    echo -e "\033[1;33mSending comment to GitHub pull request...\033[0m";
+
+    GITHUB_COMMENT=""
+    if [ -n "$API_ISSUES" ]; then
+        ESCAPED_API_ISSUES=`echo -e "$API_ISSUES" | awk -v ORS='\\n' '1'`;
+        GITHUB_COMMENT="$GITHUB_COMMENT"'#### API issues found:\\n\\n'"$ESCAPED_API_ISSUES"'\\n';
+    fi
+    if [ -n "$ABI_ISSUES" ]; then
+        ESCAPED_ABI_ISSUES=`echo -e "$ABI_ISSUES" | awk -v ORS='\\n' '1'`;
+        GITHUB_COMMENT="$GITHUB_COMMENT"'#### ABI issues found:\\n\\n'"$ESCAPED_ABI_ISSUES"'\\n';
+    fi
+
+    if [ -z "$GITHUB_COMMENT" ]; then
+        $GITHUB_COMMENT="#### No API or ABI issues found!"
+    fi
+
+    curl -s -X POST \
+        -H "Content-Type: application/json" \
+        -H "Authorization: token $GITHUB_ACCESS_TOKEN" \
+        -d "{\"body\": \"$GITHUB_COMMENT\"}" \
+        "https://api.github.com/repos/$TRAVIS_REPO_SLUG/issues/$TRAVIS_PULL_REQUEST/comments";
+
+    travis_time_finish && travis_fold end "abi_check.pr_comment";
+fi
+
+if [ -n "$API_ISSUES" ]; then
+    echo -e "\033[1;31mAPI is incompatible, halting!\033[0m";
+    exit 1;
+else
+    echo -e "\033[1;32mAPI is compatible, good job!\033[0m";
+fi
+

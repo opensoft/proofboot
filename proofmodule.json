@@ -1,0 +1,14 @@
+{
+    "name": "proofboot",
+    "has_tests": false,
+    "has_plugins": false,
+    "has_tools": false,
+    "bootstrap": {
+        "process_3rdparty": false,
+        "process_qml": false,
+        "custom_steps": []
+    },
+    "depends": [],
+    "affects": ["proof-gtest"],
+    "libraries": []
+}

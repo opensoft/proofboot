@@ -44,7 +44,12 @@ BODY='{
     }
 }';
 
-for DEP in "$@"; do
+AFFECTED="$@"
+if [ -f proofmodule.json ]; then
+    AFFECTED=`jq -rM '"opensoft/" + .affects[]' proofmodule.json | tr -s '\r\n' '\n'`
+fi
+
+for DEP in $AFFECTED; do
     travis_fold start "ping.dep" && travis_time_start;
     echo -e "\033[1;33mStarting $DEP build...\033[0m";
     ESCAPED_DEP=`echo $DEP | sed -e "s|/|%2F|"`;
