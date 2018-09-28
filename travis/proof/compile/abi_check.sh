@@ -178,7 +178,7 @@ fi
 
 if [ -n "$API_ISSUES" ]; then
     echo -e "\033[1;31mAPI is incompatible!\033[0m";
-    # TODO: 1.0: Replace with below
+    # TODO: 1.0: Replace with code below to make it failing build
     # echo -e "\033[1;31mAPI is incompatible, halting!\033[0m";
     # exit 1;
 else
