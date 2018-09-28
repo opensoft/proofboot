@@ -29,6 +29,12 @@ set -e
 
 mkdir $HOME/builder_logs;
 
+travis_fold start "prepare.awscli" && travis_time_start;
+echo -e "\033[1;33mInstalling awscli...\033[0m";
+pip install --user awscli;
+travis_time_finish && travis_fold end "prepare.awscli";
+echo " ";
+
 travis_fold start "prepare.docker" && travis_time_start;
 echo -e "\033[1;33mDownloading and starting Docker container...\033[0m";
 docker pull opensoftdev/proof-check-abi:latest;
@@ -85,33 +91,48 @@ for module in `find * -name proofmodule.json`; do
         travis_time_finish && travis_fold end "abi_check.dump";
 
         if [ "$TRAVIS_PULL_REQUEST" != "false" ] || [ "$TRAVIS_BRANCH" != "master" ]; then
-            aws s3 cp "s3://proof.travis.builds/__abi-dumps/${library}-master.dump.gz" "${library}-master.dump.gz" || true;
+            if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then
+                travis_fold start "abi_check.fetch_reference" && travis_time_start;
+                echo -e "\033[1;33mFetching new ABI dump reference for $library...\033[0m";
+                rm "$HOME/full_build/${library}-master.dump.gz" 2&>/dev/null || true;
+                aws s3 cp "s3://proof.travis.builds/__abi-dumps/${library}-master.dump.gz" "${library}-master.dump.gz" || true;
+                cp "${library}-master.dump.gz" "$HOME/full_build/${library}-master.dump.gz" || true;
+                travis_time_finish && travis_fold end "abi_check.fetch_reference";
+            else
+                cp "$HOME/full_build/${library}-master.dump.gz" "${library}-master.dump.gz" 2&>/dev/null || true;
+            fi
             if [ -f "${library}-master.dump.gz" ]; then
                 travis_fold start "abi_check.compare" && travis_time_start;
-                echo -e "\033[1;Comparing ABI dump for $library from $module with reference from master branch...\033[0m";
-                echo "$ gzip -d \"${library}-master.dump.gz\"";
-                gzip -d "${library}-master.dump.gz";
-                echo "$ abi-compliance-checker -l \"$library\" -old \"${library}-master.dump\" -new \"${library}-${PROOF_VERSION}.dump\" -ext -list-affected";
-                COMPARE_RESULTS=`docker exec -t builder abi-compliance-checker -l "$library" -old "${library}-master.dump" -new "${library}-${PROOF_VERSION}.dump" -ext -list-affected || true`;
+                echo -e "\033[1;33mComparing ABI dump for $library with reference from master branch...\033[0m";
+                echo "$ gzip -fd \"${library}-master.dump.gz\"";
+                gzip -fd "${library}-master.dump.gz";
+                echo "$ abi-compliance-checker -l \"$library\" -old \"/sandbox/proof/${library}-master.dump\" -new \"/sandbox/proof/${DUMP_FILENAME}\" -ext -list-affected";
+                COMPARE_RESULTS=`docker exec -t builder abi-compliance-checker -l "$library" -old "/sandbox/proof/${library}-master.dump" -new "/sandbox/proof/${DUMP_FILENAME}" -ext -list-affected || true`;
                 echo "$COMPARE_RESULTS";
-                RESULTS_DIR=`echo "$COMPARE_RESULTS" | sed -nE 's|Report: (.+)/.*\.html|\1|p'`;
                 travis_time_finish && travis_fold end "abi_check.compare";
 
-                if [ `echo "$COMPARE_RESULTS" | sed -nE 's|Total binary compatibility problems: ([0-9]+).*|\1|p'` -ne 0 ]; then
+                RESULTS_DIR=`echo "$COMPARE_RESULTS" | sed -nE 's|Report: (.+)/compat_report.html|\1|p' | tr -s '\r\n' '\n'`;
+                BINARY_COUNT=`echo "$COMPARE_RESULTS" | sed -nE 's|Total binary compatibility problems: ([0-9]+).*|\1|p' | tr -s '\r\n' '\n'`
+                SOURCE_COUNT=`echo "$COMPARE_RESULTS" | sed -nE 's|Total source compatibility problems: ([0-9]+).*|\1|p' | tr -s '\r\n' '\n'`
+                if [ "$BINARY_COUNT" -ne 0 ]; then
                     echo -e "\033[1;31mABI issues found:\033[0m";
-                    CURRENT_ISSUES=`docker exec -t builder c++filt @"$RESULTS_DIR/abi_affected.txt"`;
+                    CURRENT_ISSUES=`docker exec -t builder bash -c "echo | c++filt @'$RESULTS_DIR/abi_affected.txt'"`;
                     echo "$CURRENT_ISSUES";
+                    echo;
                     ABI_ISSUES=`( echo "$ABI_ISSUES"; echo "$library:"; echo "$CURRENT_ISSUES"; echo )`;
                 fi
-                if [ `echo "$COMPARE_RESULTS" | sed -nE 's|Total source compatibility problems: ([0-9]+).*|\1|p'` -ne 0 ]; then
+                if [ "$SOURCE_COUNT" -ne 0 ]; then
                     echo -e "\033[1;31mAPI issues found:\033[0m";
-                    CURRENT_ISSUES=`docker exec -t builder c++filt @"$RESULTS_DIR/src_affected.txt"`;
+                    CURRENT_ISSUES=`docker exec -t builder bash -c "echo | c++filt @'$RESULTS_DIR/src_affected.txt'"`;
                     echo "$CURRENT_ISSUES";
+                    echo;
                     API_ISSUES=`( echo "$API_ISSUES"; echo "$library:"; echo "$CURRENT_ISSUES"; echo )`;
                 fi
                 docker exec -t builder rm -rf "$RESULTS_DIR" || true;
             else
+                echo -e "\033[1;33mNo reference dump found for $library from $module. Should be new one, skipping it\033[0m";
             fi
+            echo;
         fi
     done
 done
@@ -156,9 +177,10 @@ if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then
 fi
 
 if [ -n "$API_ISSUES" ]; then
-    echo -e "\033[1;31mAPI is incompatible, halting!\033[0m";
-    exit 1;
+    echo -e "\033[1;31mAPI is incompatible!\033[0m";
+    # TODO: 1.0: Replace with below
+    # echo -e "\033[1;31mAPI is incompatible, halting!\033[0m";
+    # exit 1;
 else
     echo -e "\033[1;32mAPI is compatible, good job!\033[0m";
 fi
-
