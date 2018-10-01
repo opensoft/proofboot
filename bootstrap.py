@@ -28,6 +28,9 @@
 import argparse
 from pathlib import Path
 import shutil
+import json
+import sys
+import glob
 
 global_allow_private = True
 
@@ -40,8 +43,6 @@ def setup_parser():
                        help='Directory where Proof will be deployed')
     parser.add_argument('--single-module', dest='single_module', action='store_true',
                        help='Bootstrap only single module (with src as path to its root)')
-    parser.add_argument('--gtest-only', dest='gtest_only', action='store_true',
-                       help='Bootstrap only googletest (with src as path to its root, doesn\'t work with --single-module)')
     parser.add_argument('--boot-only', dest='boot_only', action='store_true',
                        help='Bootstrap only stuff from proofboot (doesn\'t work with --single-module)')
     parser.add_argument('--skip-private', dest='allow_private', action='store_false',
@@ -95,24 +96,54 @@ def copy_dir(src_path, dest_path):
         elif entry.is_dir():
             copy_dir(entry, dest_path/entry_name)
 
-def process_module(src_module_path, dest_path):
-    process_include_dir(src_module_path/"include", dest_path/"include", True)
-    process_include_dir(src_module_path/"3rdparty", dest_path/"include/3rdparty", False)
-    process_qml_dir(src_module_path/"qml", dest_path/"qml")
-    copy_dir(src_module_path/"features", dest_path/"features")
-    if (src_module_path/"android/common").exists():
-        copy_dir(src_module_path/"android/common", dest_path/"android")
-        copy_dir(src_module_path/"android/common", dest_path/"android/common")
-    if (src_module_path/"android/stations").exists():
-        copy_dir(src_module_path/"android/stations", dest_path/"android")
-    extra_boot_path = src_module_path/"boot"
-    if extra_boot_path.exists():
-        for entry in extra_boot_path.iterdir():
-            entry_name = entry.name
-            if entry_name[0] == ".":
-                continue
-            if entry_name[-3:] == ".py" or entry_name[-4:] == ".pri":
-                shutil.copy2(entry.as_posix(), (dest_path/entry_name).as_posix())
+def process_module_custom_step(src_module_path, dest_path, step):
+    op = step.get('operation', '')
+    if op == 'copy_file':
+        from_path = src_module_path/step.get('from', '')
+        to_path = dest_path/step.get('to', '')
+        if 'from' not in step or 'to' not in step or not from_path.exists():
+            sys.exit('copy_file operation requires both from and to params. Halting')
+        if not to_path.parent.exists():
+            to_path.parent.mkdir(parents=True)
+        shutil.copy2(from_path.as_posix(), to_path.as_posix())
+    elif op == 'copy_dir':
+        from_path = src_module_path/step.get('from', '')
+        to_path = dest_path/step.get('to', '')
+        if 'from' not in step or 'to' not in step or not from_path.exists():
+            sys.exit('copy_dir operation requires both from and to params. Halting')
+        copy_dir(from_path, to_path)
+    elif op == 'copy_headers':
+        from_path = src_module_path/step.get('from', '')
+        to_path = dest_path/"include"/step.get('to', '')
+        if 'from' not in step or 'to' not in step or not from_path.exists():
+            sys.exit('copy_headers operation requires both from and to params. Halting')
+        process_include_dir(from_path, to_path, step.get('with_private', False))
+    else:
+        sys.exit('Unknown custom step operation ' + op + '. Halting')
+
+def process_module(module_info_path, dest_path):
+    src_module_path = module_info_path.parent
+    module_info = json.load(module_info_path.open())
+    bootstrap_module_info = module_info.get('bootstrap', {})
+
+    if not bootstrap_module_info.get('custom_only', False):
+        copy_dir(src_module_path/"features", dest_path/"features")
+        process_include_dir(src_module_path/"include", dest_path/"include", True)
+        if bootstrap_module_info.get('process_qml', False):
+            process_qml_dir(src_module_path/"qml", dest_path/"qml")
+        if bootstrap_module_info.get('process_3rdparty', False):
+            process_include_dir(src_module_path/"3rdparty", dest_path/"include/3rdparty", False)
+        extra_boot_path = src_module_path/"boot"
+        if extra_boot_path.exists():
+            for entry in extra_boot_path.iterdir():
+                entry_name = entry.name
+                if entry_name[0] == ".":
+                    continue
+                if entry_name[-3:] == ".py" or entry_name[-4:] == ".pri":
+                    shutil.copy2(entry.as_posix(), (dest_path/entry_name).as_posix())
+
+    for step in bootstrap_module_info.get('custom_steps', []):
+        process_module_custom_step(src_module_path, dest_path, step)
 
 def process_proofboot(sources_path, dest_path):
     boot_path = sources_path/"proofboot"
@@ -150,24 +181,6 @@ def process_proofboot(sources_path, dest_path):
     shutil.copy2((boot_path/"bootstrap.py").as_posix(), (dest_path/"bootstrap.py").as_posix())
     print ("Bootstrap script copied.")
 
-def process_gtest(sources_path, dest_path):
-    print ("Copying Google Test includes...")
-    process_include_dir(sources_path/"gtest", dest_path/"include/gtest", False)
-    shutil.copy2((sources_path/"test_global.h").as_posix(), (dest_path/"include/gtest/test_global.h").as_posix())
-    shutil.copy2((sources_path/"test_fakeserver.h").as_posix(), (dest_path/"include/gtest/test_fakeserver.h").as_posix())
-    print ("Google Test includes copied.")
-
-def full_bootstrap(sources_path, dest_path):
-    for module in ("proofseed", "proofbase", "proofutils", "proofgui", "proofprofit", "proofnetworkjdf", "proofnetworkonp", "proofnetworkmms", "proofnetworktracker", "proofhardware", "proofscissorhands", "proofcv", "proofhardwareslitter"):
-        src_module_path = sources_path / module
-        if not src_module_path.exists() or not src_module_path.is_dir():
-            continue
-        print ("Processing", module, "...")
-        process_module(src_module_path, dest_path)
-        print (module, "done")
-
-    print ("Bootstrap finished.")
-
 def main():
     parser = setup_parser()
     args = parser.parse_args()
@@ -181,19 +194,25 @@ def main():
     dest_path = dest_path.resolve()
 
     if not sources_path.exists() or not sources_path.is_dir():
-        print (sources_path, " doesn't exist")
-        return
+        print (sources_path, " doesn't exist, halting")
+        return 1
 
     if args.single_module:
         print ("Processing", sources_path, "...")
-        process_module(sources_path, dest_path)
+        proofmodule_json_path = sources_path/"proofmodule.json"
+        if not proofmodule_json_path.exists():
+            print ("No proofmodule.json found in ", sources_path, ". Halting")
+            return 1
+        process_module(proofmodule_json_path, dest_path)
         print (sources_path, "done")
-    elif args.gtest_only:
-        process_gtest(sources_path, dest_path)
     else:
         process_proofboot(sources_path, dest_path)
         if not args.boot_only:
-            process_gtest(sources_path/"3rdparty/proof-gtest", dest_path)
-            full_bootstrap(sources_path, dest_path)
+            for proofmodule in glob.iglob(args.src_dir + '/**/proofmodule.json', recursive=True):
+                proofmodule_json_path = Path(proofmodule).resolve()
+                print ("Processing", proofmodule, "...")
+                process_module(proofmodule_json_path, dest_path)
+                print (proofmodule, "done")
+    print ("Bootstrap finished.")
 
 main()
