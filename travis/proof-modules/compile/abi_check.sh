@@ -73,6 +73,7 @@ echo -e "\033[1;33mCompiling...\033[0m";
 echo "$ make -j4";
 docker exec -t builder bash -c "exec 3>&1; set -o pipefail; rm -rf /sandbox/logs/*; cd build; make -j4 2>&1 1>&3 | (tee /sandbox/logs/errors.log 1>&2)";
 travis_time_finish && travis_fold end "build.compile" && $HOME/proof-bin/dev-tools/travis/check_for_errorslog.sh compilation || true;
+echo " ";
 
 PROOF_VERSION=`$HOME/proof-bin/dev-tools/travis/grep_proof_version.sh $HOME/proof-bin-copy`
 
@@ -101,7 +102,7 @@ for library in $LIBRARIES; do
         cp "${library}-master.dump.gz" "$HOME/full_build/${library}-master.dump.gz" || true;
         travis_time_finish && travis_fold end "abi_check.fetch_reference";
     else
-        cp "$HOME/full_build/${library}-master.dump.gz" "${library}-master.dump.gz" 2&>/dev/null || true;
+        cp "$HOME/full_build/${library}-master.dump.gz" "${library}-master.dump.gz" || true;
     fi
     if [ -f "${library}-master.dump.gz" ]; then
         travis_fold start "abi_check.compare" && travis_time_start;
@@ -137,32 +138,33 @@ for library in $LIBRARIES; do
     echo;
 done
 
-if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then
-    travis_fold start "abi_check.pr_comment" && travis_time_start;
-    echo -e "\033[1;33mSending comment to GitHub pull request...\033[0m";
+# Travis-CI doesn't expose encrypted variables to Pull Requests so it is seems to be impossible to send any comments
+# if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then
+#     travis_fold start "abi_check.pr_comment" && travis_time_start;
+#     echo -e "\033[1;33mSending comment to GitHub pull request...\033[0m";
 
-    GITHUB_COMMENT=""
-    if [ -n "$API_ISSUES" ]; then
-        ESCAPED_API_ISSUES=`echo -e "$API_ISSUES" | awk -v ORS='\\n' '1'`;
-        GITHUB_COMMENT="$GITHUB_COMMENT"'#### API issues found:\\n\\n'"$ESCAPED_API_ISSUES"'\\n';
-    fi
-    if [ -n "$ABI_ISSUES" ]; then
-        ESCAPED_ABI_ISSUES=`echo -e "$ABI_ISSUES" | awk -v ORS='\\n' '1'`;
-        GITHUB_COMMENT="$GITHUB_COMMENT"'#### ABI issues found:\\n\\n'"$ESCAPED_ABI_ISSUES"'\\n';
-    fi
+#     GITHUB_COMMENT=""
+#     if [ -n "$API_ISSUES" ]; then
+#         ESCAPED_API_ISSUES=`echo -e "$API_ISSUES" | awk -v ORS='\\n' '1'`;
+#         GITHUB_COMMENT="$GITHUB_COMMENT"'#### API issues found:\\n\\n'"$ESCAPED_API_ISSUES"'\\n';
+#     fi
+#     if [ -n "$ABI_ISSUES" ]; then
+#         ESCAPED_ABI_ISSUES=`echo -e "$ABI_ISSUES" | awk -v ORS='\\n' '1'`;
+#         GITHUB_COMMENT="$GITHUB_COMMENT"'#### ABI issues found:\\n\\n'"$ESCAPED_ABI_ISSUES"'\\n';
+#     fi
 
-    if [ -z "$GITHUB_COMMENT" ]; then
-        $GITHUB_COMMENT="#### No API or ABI issues found!"
-    fi
+#     if [ -z "$GITHUB_COMMENT" ]; then
+#         GITHUB_COMMENT="#### No API or ABI issues found!"
+#     fi
 
-    curl -s -X POST \
-        -H "Content-Type: application/json" \
-        -H "Authorization: token $GITHUB_ACCESS_TOKEN" \
-        -d "{\"body\": \"$GITHUB_COMMENT\"}" \
-        "https://api.github.com/repos/$TRAVIS_REPO_SLUG/issues/$TRAVIS_PULL_REQUEST/comments";
+#     curl -s -X POST \
+#         -H "Content-Type: application/json" \
+#         -H "Authorization: token $GITHUB_ACCESS_TOKEN" \
+#         -d "{\"body\": \"$GITHUB_COMMENT\"}" \
+#         "https://api.github.com/repos/$TRAVIS_REPO_SLUG/issues/$TRAVIS_PULL_REQUEST/comments";
 
-    travis_time_finish && travis_fold end "abi_check.pr_comment";
-fi
+#     travis_time_finish && travis_fold end "abi_check.pr_comment";
+# fi
 
 if [ -n "$API_ISSUES" ]; then
     echo -e "\033[1;31mAPI is incompatible!\033[0m";
