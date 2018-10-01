@@ -44,8 +44,8 @@ travis_fold start "prepare.docker" && travis_time_start;
 echo -e "\033[1;33mDownloading and starting Docker container...\033[0m";
 docker pull opensoftdev/proof-check-abi:latest;
 cp -R $HOME/proof-bin $HOME/proof-bin-copy;
-docker run -id --name builder -w="/sandbox" -w="/sandbox" \
-    -v $(pwd):/sandbox/$TARGET_NAME -v $HOME/proof-bin-copy:/sandbox/bin -v $HOME/builder_logs:/sandbox/logs \
+docker run -id --name builder -w="/sandbox" -v $(pwd):/sandbox/$TARGET_NAME -v $HOME/proof-bin-copy:/sandbox/bin \
+    -v $HOME/builder_logs:/sandbox/logs -v $HOME/builder_ccache:/root/.ccache \
     -e "PROOF_PATH=/sandbox/bin" -e "QMAKEFEATURES=/sandbox/bin/features" opensoftdev/proof-check-abi tail -f /dev/null;
 docker ps;
 travis_time_finish && travis_fold end "prepare.docker";
@@ -167,10 +167,13 @@ done
 # fi
 
 if [ -n "$API_ISSUES" ]; then
-    echo -e "\033[1;31mAPI is incompatible!\033[0m";
-    # TODO: 1.0: Replace with code below to make it failing build
-    # echo -e "\033[1;31mAPI is incompatible, halting!\033[0m";
-    # exit 1;
+    # TODO: 1.0: make this for all builds, not only for pull requests
+    if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then
+        echo -e "\033[1;31mAPI is incompatible, halting!\033[0m";
+        exit 1;
+    else
+        echo -e "\033[1;31mAPI is incompatible!\033[0m";
+    fi
 else
     echo -e "\033[1;32mAPI is compatible, good job!\033[0m";
 fi
