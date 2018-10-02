@@ -41,7 +41,11 @@ if [ ! -f proofmodule.json ]; then
 fi
 
 mkdir __dependencies && cd __dependencies;
-for DEP in `jq -rM "if (keys | contains([\"depends_${PLATFORM}\"])) then .depends_${PLATFORM}[] else .depends[] end" ../proofmodule.json | tr -s '\r\n' '\n'`; do
+TARGET_OS="$PLATFORM"
+if [[ $TARGET_OS = *debian* ]]; then
+    TARGET_OS="linux"
+fi
+for DEP in `jq -rM "if ({} + .${TARGET_OS}? | keys | contains([\"depends\"])) then .${TARGET_OS}.depends[] else .depends[] end" ../proofmodule.json | tr -s '\r\n' '\n'`; do
     travis_time_start;
     echo -e "\033[1;33mDownloading $DEP...\033[0m";
     aws s3 cp s3://proof.travis.builds/$TRAVIS_BRANCH/raw-bin/$DEP-bin-$PLATFORM.tar.gz proof-bin.tar.gz \

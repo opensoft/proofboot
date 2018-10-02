@@ -46,7 +46,7 @@ BODY='{
 
 AFFECTED="$@"
 if [ -f proofmodule.json ]; then
-    AFFECTED=`jq -rM '"opensoft/" + .affects[]' proofmodule.json | tr -s '\r\n' '\n'`
+    AFFECTED=`jq -rM "\"opensoft/\" + .affects[]" proofmodule.json | tr -s '\r\n' '\n'`
 fi
 
 for DEP in $AFFECTED; do
