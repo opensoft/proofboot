@@ -166,7 +166,7 @@ if [ -n "$EXTRA_DEPENDS" ]; then
     DEPENDS="$DEPENDS,$EXTRA_DEPENDS"
 fi
 
-SUGGESTS=openvpn
+SUGGESTS="openvpn,xinput-calibrator"
 if [ -n "$EXTRA_SUGGESTS" ]; then
     echo "Adding extra suggests from Manifest: $EXTRA_SUGGESTS"
     SUGGESTS="$SUGGESTS,$EXTRA_SUGGESTS"
