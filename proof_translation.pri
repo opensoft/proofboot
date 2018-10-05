@@ -61,5 +61,5 @@ defineReplace(qm_file_list) {
 }
 
 RESOURCES += $$generate_translations_qrc($$qm_file_list())
-!with-translations:system($$(PROOF_PATH)/generate_translation.py --target $$TARGET --keep_ts --ts_dir $$_PRO_FILE_PWD_/translations --lst $$list_for_lupdate() $$languages_list())
-with-translations:system($$(PROOF_PATH)/generate_translation.py --target $$TARGET --ts_dir $$_PRO_FILE_PWD_/translations --lst $$list_for_lupdate() $$languages_list())
+!with-translations:system("$$(PROOF_PATH)/generate_translation.py" --target "$$TARGET" --keep_ts --ts_dir "$$_PRO_FILE_PWD_/translations" --lst "$$list_for_lupdate()" $$languages_list())
+with-translations:system("$$(PROOF_PATH)/generate_translation.py" --target "$$TARGET" --ts_dir "$$_PRO_FILE_PWD_/translations" --lst "$$list_for_lupdate()" $$languages_list())
