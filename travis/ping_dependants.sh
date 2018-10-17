@@ -49,17 +49,24 @@ if [ -f proofmodule.json ]; then
     AFFECTED=`jq -rM "\"opensoft/\" + .affects[]" proofmodule.json | tr -s '\r\n' '\n'`
 fi
 
+exec 3>&1;
+EXIT_CODE=0;
 for DEP in $AFFECTED; do
     travis_fold start "ping.dep" && travis_time_start;
     echo -e "\033[1;33mStarting $DEP build...\033[0m";
     ESCAPED_DEP=`echo $DEP | sed -e "s|/|%2F|"`;
-    curl -s -X POST \
+    PING_RESULT=$(curl -s -w "%{http_code}" -o >(cat >&3) -X POST \
         -H "Content-Type: application/json" \
         -H "Accept: application/json" \
         -H "Travis-API-Version: 3" \
         -H "Authorization: token $TRAVIS_ACCESS_TOKEN" \
         -d "$BODY" \
-        https://api.travis-ci.com/repo/$ESCAPED_DEP/requests;
+        https://api.travis-ci.com/repo/$ESCAPED_DEP/requests);
     travis_time_finish && travis_fold end "ping.dep";
-    echo " ";
+    if [ $PING_RESULT -ge 300 ]; then
+        echo -e "\033[1;31mFailed!\033[0m";
+        EXIT_CODE=1;
+    fi
+    echo;
 done
+exit $EXIT_CODE;
