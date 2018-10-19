@@ -182,10 +182,12 @@ VERSION=`grep -e "VERSION\ =" $PROJECT_FILE | sed 's/^VERSION\ =\ \(.*\)/\1/'`
 PROOF_VERSION=`$PROOF_PATH/dev-tools/travis/grep_proof_version.sh $PROOF_PATH`
 
 # Building package
-mkdir -p "$PACKAGE_ROOT/DEBIAN"
-cp -R "$ROOT"/DEBIAN/* "$PACKAGE_ROOT"/DEBIAN/
-sed -E "s|##APP_RESTARTER_PATH##|/opt/Opensoft/proof-restarter/$PACKAGE_NAME|" -i "$PACKAGE_ROOT"/DEBIAN/preinst
-sed -E "s|##APP_RESTARTER_PATH##|/opt/Opensoft/proof-restarter/$PACKAGE_NAME|" -i "$PACKAGE_ROOT"/DEBIAN/postinst
+mkdir -p "$PACKAGE_ROOT/DEBIAN";
+if [ -z "SKIP_DEB_SCRIPTS" ]; then
+    cp -R "$ROOT"/DEBIAN/* "$PACKAGE_ROOT"/DEBIAN/;
+    sed -E "s|##APP_RESTARTER_PATH##|/opt/Opensoft/proof-restarter/$PACKAGE_NAME|" -i "$PACKAGE_ROOT"/DEBIAN/preinst;
+    sed -E "s|##APP_RESTARTER_PATH##|/opt/Opensoft/proof-restarter/$PACKAGE_NAME|" -i "$PACKAGE_ROOT"/DEBIAN/postinst;
+fi
 
 cat << EOT > "$PACKAGE_ROOT/DEBIAN/control"
 Package: $PACKAGE_NAME
