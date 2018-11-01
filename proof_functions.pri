@@ -33,6 +33,14 @@ defineTest(parse_proof_module) {
     isEmpty(MODULE_NAME):return(false)
     !exists($${MODULE_DIR}/$${MODULE_NAME}.pro):return(true)
 
+    android:contains(MODULE_INFO._KEYS_, android):contains(MODULE_INFO.android._KEYS_, skip):$${MODULE_INFO.android.skip} {
+        return(true)
+    } else:!android:linux:contains(MODULE_INFO._KEYS_, linux):contains(MODULE_INFO.linux._KEYS_, skip):$${MODULE_INFO.linux.skip} {
+        return(true)
+    } else:win32:contains(MODULE_INFO._KEYS_, windows):contains(MODULE_INFO.windows._KEYS_, skip):$${MODULE_INFO.windows.skip} {
+        return(true)
+    }
+
     $${MODULE_NAME}.subdir = $$MODULE_DIR
     android:contains(MODULE_INFO._KEYS_, android):contains(MODULE_INFO.android._KEYS_, depends) {
         for (key, MODULE_INFO.android.depends._KEYS_):$${MODULE_NAME}.depends *= $$eval(MODULE_INFO.android.depends.$${key})
