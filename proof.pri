@@ -11,14 +11,7 @@ MOC_DIR = $$OBJECTS_DIR
 RCC_DIR = $$OBJECTS_DIR
 DESTDIR = $$BUILDPATH/lib
 
-!contains(DEFINES, FORCE_QCA_DISABLED) {
-    load(crypto) {
-        DEFINES -= QCA_DISABLED
-    } else {
-        CONFIG -= crypto
-        DEFINES += QCA_DISABLED
-    }
-}
+load(crypto)
 
 msvc {
     # QtCore/qvector.h(656): warning C4127: conditional expression is constant
