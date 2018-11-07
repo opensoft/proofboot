@@ -5,14 +5,7 @@ OBJECTS_DIR = $$OUT_PWD
 MOC_DIR = $$OBJECTS_DIR
 RCC_DIR = $$OBJECTS_DIR
 
-!contains(DEFINES, FORCE_QCA_DISABLED) {
-    load(crypto) {
-        DEFINES -= QCA_DISABLED
-    } else {
-        CONFIG -= crypto
-        DEFINES += QCA_DISABLED
-    }
-}
+load(crypto)
 
 DEFINES += APP_VERSION=\\\"$${VERSION}\\\"
 
