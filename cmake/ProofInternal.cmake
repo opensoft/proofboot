@@ -155,7 +155,7 @@ function(proof_add_test target)
     proof_set_cxx_target_properties(${target})
     target_link_libraries(${target} ${PROOF_LIBS} proof-gtest)
 
-    if (NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Android")
+    if (NOT ANDROID)
         gtest_discover_tests(${target}
             DISCOVERY_TIMEOUT 30
             PROPERTIES TIMEOUT 30

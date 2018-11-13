@@ -77,7 +77,7 @@ exec /opt/Opensoft/${target}/bin/${target}")
         if(NOT _arg_AUTOSTART)
             install(CODE "file(TOUCH \${CMAKE_INSTALL_PREFIX}/opt/Opensoft/proof-restarter/${target}/down)")
         endif()
-    elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Android")
+    elseif(ANDROID)
     endif()
 endfunction()
 
