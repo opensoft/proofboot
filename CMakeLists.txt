@@ -1,0 +1,7 @@
+cmake_minimum_required(VERSION 3.10.3)
+project(ProofBoot)
+install(DIRECTORY deploy DESTINATION dev-tools)
+install(DIRECTORY travis DESTINATION dev-tools)
+install(FILES cmake/ProofInternal.cmake DESTINATION lib/cmake/modules)
+install(FILES cmake/ProofApp.cmake DESTINATION lib/cmake/modules)
+install(FILES cmake/ProofCommon.cmake DESTINATION lib/cmake/modules)
