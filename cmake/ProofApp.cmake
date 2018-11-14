@@ -9,9 +9,6 @@ macro(proof_project project_name)
         ${ARGN}
     )
 
-    proof_qt_init()
-    list(APPEND CMAKE_PREFIX_PATH "${PROOF_CMAKE_PATH}")
-    list(APPEND CMAKE_PREFIX_PATH "${PROOF_CMAKE_PATH}/3rdparty")
     project(${project_name} VERSION ${_arg_VERSION} LANGUAGES CXX)
     find_package(Qt5Core CONFIG REQUIRED)
     add_compile_definitions(APP_VERSION=\"${_arg_VERSION}\")

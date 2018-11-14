@@ -4,7 +4,6 @@ include(ProofCommon)
 set(PROOF_VERSION 0.8.11.1)
 
 macro(proof_init)
-    proof_qt_init()
     list(APPEND CMAKE_PREFIX_PATH "${CMAKE_INSTALL_PREFIX}/lib/cmake")
     list(APPEND CMAKE_PREFIX_PATH "${CMAKE_INSTALL_PREFIX}/lib/cmake/3rdparty")
 endmacro()
@@ -80,6 +79,11 @@ function(proof_add_module target)
     )
     install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Proof${target}Config.cmake
         DESTINATION lib/cmake
+    )
+    install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules
+        DESTINATION lib/cmake
+        OPTIONAL
+        FILES_MATCHING PATTERN "*.cmake"
     )
 
     if ((NOT DEFINED PROOF_FULL_BUILD) OR PROOF_DEV_BUILD)

@@ -1,19 +1,3 @@
-# This ideally should be done by cmake itself but for some reason breaks at Android platform
-macro(proof_qt_init)
-    if (DEFINED QT_PATH)
-        set(Qt5Core_DIR ${QT_PATH}/lib/cmake/Qt5Core)
-        set(Qt5Gui_DIR ${QT_PATH}/lib/cmake/Qt5Gui)
-        set(Qt5Network_DIR ${QT_PATH}/lib/cmake/Qt5Network)
-        set(Qt5Qml_DIR ${QT_PATH}/lib/cmake/Qt5Qml)
-        set(Qt5Quick_DIR ${QT_PATH}/lib/cmake/Qt5Quick)
-        set(Qt5QuickCompiler_DIR ${QT_PATH}/lib/cmake/Qt5QuickCompiler)
-        set(Qt5Test_DIR ${QT_PATH}/lib/cmake/Qt5Test)
-        set(Qt5Xml_DIR ${QT_PATH}/lib/cmake/Qt5Xml)
-        set(Qt5AndroidExtras_DIR ${QT_PATH}/lib/cmake/Qt5AndroidExtras)
-        set(Qca-qt5_DIR ${QT_PATH}/lib/cmake/Qca-qt5)
-    endif()
-endmacro()
-
 function(proof_set_cxx_target_properties target)
     set_target_properties(${target} PROPERTIES
         CXX_STANDARD 14
