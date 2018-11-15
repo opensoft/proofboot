@@ -31,7 +31,7 @@ travis_fold start "prepare.docker" && travis_time_start;
 echo -e "\033[1;33mDownloading Docker container...\033[0m";
 docker pull opensoftdev/proof-runner:latest;
 docker run -id --name runner -w="/sandbox" -e "PROOF_PATH=/opt/Opensoft/proof" \
-    -v $HOME/extra_s3_deps:/sandbox/extra_s3_deps \
+    -v $(pwd):/sandbox/target_src -v $HOME/extra_s3_deps:/sandbox/extra_s3_deps \
     -v $HOME/proof-bin:/opt/Opensoft/proof -v $HOME/tests_build:/sandbox/build opensoftdev/proof-runner tail -f /dev/null;
 docker ps;
 travis_time_finish && travis_fold end "prepare.docker";
