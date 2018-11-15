@@ -31,10 +31,32 @@ travis_fold start "prepare.docker" && travis_time_start;
 echo -e "\033[1;33mDownloading Docker container...\033[0m";
 docker pull opensoftdev/proof-runner:latest;
 docker run -id --name runner -w="/sandbox" -e "PROOF_PATH=/opt/Opensoft/proof" \
+    -v $HOME/extra_s3_deps:/sandbox/extra_s3_deps \
     -v $HOME/proof-bin:/opt/Opensoft/proof -v $HOME/tests_build:/sandbox/build opensoftdev/proof-runner tail -f /dev/null;
 docker ps;
 travis_time_finish && travis_fold end "prepare.docker";
 echo " ";
+
+if [ -n "$EXTRA_DEPS" ]; then
+    travis_time_start;
+    echo -e "\033[1;33mUpdating apt database...\033[0m";
+    docker exec -t runner bash -c "apt-get -qq update";
+    travis_time_finish;
+    echo " ";
+    travis_fold start "prepare.extra_deps" && travis_time_start;
+    echo -e "\033[1;33mInstalling extra dependencies...\033[0m";
+    docker exec -t runner bash -c "apt-get -qq install $EXTRA_DEPS -y --no-install-recommends";
+    travis_time_finish && travis_fold end "prepare.extra_deps";
+    echo " ";
+fi
+
+if [ -n "$(ls -A $HOME/extra_s3_deps/*.deb)" ]; then
+    travis_fold start "prepare.extra_s3_deps" && travis_time_start;
+    echo -e "\033[1;33mInstalling extra dependencies downloaded from S3...\033[0m";
+    docker exec -t runner bash -c "(dpkg -i /sandbox/extra_s3_deps/*.deb 2> /dev/null || apt-get -qq -f install -y --no-install-recommends)";
+    travis_time_finish && travis_fold end "prepare.extra_s3_deps";
+    echo " ";
+fi
 
 travis_fold start "prepare.dirs" && travis_time_start;
 echo -e "\033[1;33mPreparing...\033[0m";
