@@ -4,9 +4,22 @@ include(ProofCommon)
 set(PROOF_VERSION 0.8.11.1)
 
 macro(proof_init)
+    set_property(GLOBAL PROPERTY USE_FOLDERS ON)
     list(APPEND CMAKE_PREFIX_PATH "${CMAKE_INSTALL_PREFIX}/lib/cmake")
     list(APPEND CMAKE_PREFIX_PATH "${CMAKE_INSTALL_PREFIX}/lib/cmake/3rdparty")
 endmacro()
+
+function(__proof_find_module_root_dirname module_root dir_before)
+    set(current_folder ${CMAKE_CURRENT_SOURCE_DIR})
+    get_filename_component(current_folder_name ${current_folder} NAME)
+    while(NOT ("${current_folder_name}" STREQUAL ${dir_before} OR "${current_folder_name}" STREQUAL ""))
+        get_filename_component(current_folder ${current_folder} DIRECTORY)
+        get_filename_component(current_folder_name ${current_folder} NAME)
+    endwhile()
+    get_filename_component(current_folder ${current_folder} DIRECTORY)
+    get_filename_component(current_folder ${current_folder} NAME)
+    set(${module_root} ${current_folder} PARENT_SCOPE)
+endfunction()
 
 function(proof_add_target_private_headers target)
     set(Proof_${target}_PRIVATE_HEADERS ${Proof_${target}_PRIVATE_HEADERS} ${ARGN} PARENT_SCOPE)
@@ -37,11 +50,13 @@ function(proof_add_module target)
     add_library("Proof::${target}" ALIAS ${target})
 
     proof_set_cxx_target_properties(${target})
+    get_filename_component(module_root_dirname ${CMAKE_CURRENT_SOURCE_DIR} NAME)
     set_target_properties(${target} PROPERTIES
         C_VISIBILITY_PRESET hidden
         CXX_VISIBILITY_PRESET hidden
         OUTPUT_NAME "Proof${target}"
         DEFINE_SYMBOL "Proof_${target}_EXPORTS"
+        FOLDER ${module_root_dirname}
     )
 
     target_include_directories(${target}
@@ -127,9 +142,11 @@ function(proof_add_qml_plugin target)
         ${_arg_QMLDIR}
     )
     proof_set_cxx_target_properties(${target})
+    __proof_find_module_root_dirname(module_root_dirname "plugins")
     set_target_properties(${target} PROPERTIES
         C_VISIBILITY_PRESET hidden
         CXX_VISIBILITY_PRESET hidden
+        FOLDER "${module_root_dirname}/plugins"
     )
 
     target_link_libraries(${target} PUBLIC Qt5::Qml ${PROOF_LIBS})
@@ -157,6 +174,10 @@ function(proof_add_test target)
     )
 
     proof_set_cxx_target_properties(${target})
+    __proof_find_module_root_dirname(module_root_dirname "tests")
+    set_target_properties(${target} PROPERTIES
+        FOLDER "${module_root_dirname}/tests"
+    )
     target_link_libraries(${target} ${PROOF_LIBS} proof-gtest)
 
     if (NOT ANDROID)
@@ -192,6 +213,10 @@ function(proof_add_tool target)
     )
 
     proof_set_cxx_target_properties(${target})
+    __proof_find_module_root_dirname(module_root_dirname "tools")
+    set_target_properties(${target} PROPERTIES
+        FOLDER "${module_root_dirname}/tools"
+    )
 
     target_link_libraries(${target} ${QT_LIBS} ${PROOF_LIBS} ${_arg_OTHER_LIBS})
 
