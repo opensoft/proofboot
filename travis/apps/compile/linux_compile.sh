@@ -100,10 +100,32 @@ if [ -f ${TARGET_NAME}_tests.pro ]; then
     sudo rm -rf $HOME/tests_build && mkdir $HOME/tests_build;
     docker run -id --name tests_builder -w="/sandbox" -e "PROOF_PATH=/sandbox/proof-bin" -e "QMAKEFEATURES=/sandbox/proof-bin/features" \
         -v $(pwd):/sandbox/target_src -v $HOME/proof-bin:/sandbox/proof-bin -v $HOME/builder_logs:/sandbox/logs \
+        -v $HOME/extra_s3_deps:/sandbox/extra_s3_deps \
         -v $HOME/builder_ccache:/root/.ccache -v $HOME/tests_build:/sandbox/build $DOCKER_IMAGE tail -f /dev/null;
     docker ps;
     travis_time_finish && travis_fold end "prepare.docker_tests";
     echo " ";
+    
+    if [ -n "$EXTRA_DEPS" ]; then
+        travis_time_start;
+        echo -e "\033[1;33mUpdating apt database...\033[0m";
+        docker exec -t tests_builder bash -c "apt-get -qq update";
+        travis_time_finish;
+        echo " ";
+        travis_fold start "prepare.extra_deps" && travis_time_start;
+        echo -e "\033[1;33mInstalling extra dependencies...\033[0m";
+        docker exec -t tests_builder bash -c "apt-get -qq install $EXTRA_DEPS -y --no-install-recommends";
+        travis_time_finish && travis_fold end "prepare.extra_deps";
+        echo " ";
+    fi
+
+    if [ -n "$(ls -A $HOME/extra_s3_deps/*.deb)" ]; then
+        travis_fold start "prepare.extra_s3_deps" && travis_time_start;
+        echo -e "\033[1;33mInstalling extra dependencies downloaded from S3...\033[0m";
+        docker exec -t tests_builder bash -c "(dpkg -i /sandbox/extra_s3_deps/*.deb 2> /dev/null || apt-get -qq -f install -y --no-install-recommends)";
+        travis_time_finish && travis_fold end "prepare.extra_s3_deps";
+        echo " ";
+    fi
 
     travis_fold start "build.qmake_tests" && travis_time_start;
     echo -e "\033[1;33mRunning qmake for tests...\033[0m";
