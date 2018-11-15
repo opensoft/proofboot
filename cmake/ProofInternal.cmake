@@ -37,6 +37,7 @@ function(proof_add_module target)
     add_library("Proof::${target}" ALIAS ${target})
 
     proof_set_cxx_target_properties(${target})
+    set_target_properties(${target} PROPERTIES FOLDER "proof")
     set_target_properties(${target} PROPERTIES
         C_VISIBILITY_PRESET hidden
         CXX_VISIBILITY_PRESET hidden
@@ -127,6 +128,7 @@ function(proof_add_qml_plugin target)
         ${_arg_QMLDIR}
     )
     proof_set_cxx_target_properties(${target})
+    set_target_properties(${target} PROPERTIES FOLDER "qml")
     set_target_properties(${target} PROPERTIES
         C_VISIBILITY_PRESET hidden
         CXX_VISIBILITY_PRESET hidden
@@ -156,6 +158,7 @@ function(proof_add_test target)
         ${Proof_${target}_MOC_SOURCES}
     )
 
+    set_target_properties(${target} PROPERTIES FOLDER "tests")
     proof_set_cxx_target_properties(${target})
     target_link_libraries(${target} ${PROOF_LIBS} proof-gtest)
 
@@ -190,6 +193,7 @@ function(proof_add_tool target)
         ${Proof_${target}_PUBLIC_HEADERS} ${Proof_${target}_PRIVATE_HEADERS}
         ${Proof_${target}_MOC_SOURCES}
     )
+    set_target_properties(${target} PROPERTIES FOLDER "tools")
 
     proof_set_cxx_target_properties(${target})
 
