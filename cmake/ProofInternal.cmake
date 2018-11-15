@@ -42,6 +42,9 @@ function(proof_add_module target)
         CXX_VISIBILITY_PRESET hidden
         OUTPUT_NAME "Proof${target}"
         DEFINE_SYMBOL "Proof_${target}_EXPORTS"
+        ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
+        LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
+        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
     )
 
     target_include_directories(${target}
@@ -130,6 +133,9 @@ function(proof_add_qml_plugin target)
     set_target_properties(${target} PROPERTIES
         C_VISIBILITY_PRESET hidden
         CXX_VISIBILITY_PRESET hidden
+        ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
+        LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
+        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
     )
 
     target_link_libraries(${target} PUBLIC Qt5::Qml ${PROOF_LIBS})
@@ -156,6 +162,12 @@ function(proof_add_test target)
         ${Proof_${target}_MOC_SOURCES}
     )
 
+    set_target_properties(${target} PROPERTIES
+        ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
+        LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
+        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
+    )
+
     proof_set_cxx_target_properties(${target})
     target_link_libraries(${target} ${PROOF_LIBS} proof-gtest)
 
@@ -163,7 +175,12 @@ function(proof_add_test target)
         gtest_discover_tests(${target}
             DISCOVERY_TIMEOUT 30
             PROPERTIES TIMEOUT 30
+            WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/lib/$<CONFIG>"
+#            TEST_LIST outVar
         )
+#        set_tests_properties(${outVar} PROPERTIES 
+#            ENVIRONMENT "PATH=d:/Opensoft/Proof/depended/install/bin;D:/Qt/qtt/bin;%PATH%"
+#        )
         install(TARGETS ${target} RUNTIME DESTINATION tests)
     endif()
 endfunction()
@@ -189,6 +206,11 @@ function(proof_add_tool target)
         ${Proof_${target}_SOURCES} ${Proof_${target}_RESOURCES}
         ${Proof_${target}_PUBLIC_HEADERS} ${Proof_${target}_PRIVATE_HEADERS}
         ${Proof_${target}_MOC_SOURCES}
+    )
+    set_target_properties(${target} PROPERTIES
+        ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
+        LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
+        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
     )
 
     proof_set_cxx_target_properties(${target})
