@@ -52,7 +52,8 @@ echo " ";
 travis_fold start "prepare.docker" && travis_time_start;
 echo -e "\033[1;33mDownloading and starting Docker container...\033[0m";
 docker pull opensoftdev/proof-builder-base:latest;
-docker run -id --name builder -w="/sandbox" -v $(pwd):/sandbox/target_src -v $HOME/full_build:/sandbox/build -v $HOME/proof-bin:/opt/Opensoft/proof \
+docker run -id --name builder -w="/sandbox" -v $(pwd):/sandbox/target_src -v $HOME/full_build:/sandbox/build \
+    -v $HOME/proof-bin:/opt/Opensoft/proof -v $HOME/extra_s3_deps:/sandbox/extra_s3_deps \
     -e "BUILD_ROOT=/sandbox/build" -e "PACKAGE_ROOT=/sandbox/package-$TARGET_NAME" -e "SKIP_BUILD_FOR_DEB_PACKAGE=true" -e "TARGET_NAME=$TARGET_NAME" \
     -e "PROOF_PATH=/opt/Opensoft/proof" -e "QMAKEFEATURES=/opt/Opensoft/proof/features" \
     opensoftdev/proof-builder-base tail -f /dev/null;
@@ -71,6 +72,14 @@ if [ -n "$EXTRA_DEPS" ]; then
     echo -e "\033[1;33mInstalling extra dependencies...\033[0m";
     docker exec -t builder bash -c "apt-get -qq install $EXTRA_DEPS -y --no-install-recommends";
     travis_time_finish && travis_fold end "prepare.extra_deps";
+    echo " ";
+fi
+
+if [ -n "$(ls -A $HOME/extra_s3_deps/*.deb)" ]; then
+    travis_fold start "prepare.extra_s3_deps" && travis_time_start;
+    echo -e "\033[1;33mInstalling extra dependencies downloaded from S3...\033[0m";
+    docker exec -t builder bash -c "(dpkg -i /sandbox/extra_s3_deps/*.deb 2> /dev/null || apt-get -qq -f install -y --no-install-recommends)";
+    travis_time_finish && travis_fold end "prepare.extra_s3_deps";
     echo " ";
 fi
 
