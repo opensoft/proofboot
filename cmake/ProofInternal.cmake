@@ -101,6 +101,12 @@ function(proof_add_module target)
         FILES_MATCHING PATTERN "*.cmake"
     )
 
+    install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/cmake/3rdparty
+        DESTINATION lib/cmake
+        OPTIONAL
+        FILES_MATCHING PATTERN "*.cmake"
+    )
+
     if ((NOT DEFINED PROOF_FULL_BUILD) OR PROOF_DEV_BUILD)
         foreach(HEADER ${Proof_${target}_PRIVATE_HEADERS})
             get_filename_component(DEST ${HEADER} DIRECTORY)

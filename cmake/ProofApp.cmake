@@ -11,6 +11,7 @@ macro(proof_project project_name)
 
     project(${project_name} VERSION ${_arg_VERSION} LANGUAGES CXX)
     find_package(Qt5Core CONFIG REQUIRED)
+    include(ProofAndroidApk OPTIONAL)
     add_compile_definitions(APP_VERSION=\"${_arg_VERSION}\")
 endmacro()
 
@@ -32,14 +33,20 @@ function(proof_add_app target)
         set(PROOF_LIBS ${PROOF_LIBS} "Proof::${PROOF_LIB}")
     endforeach()
 
-    add_executable(${target}
-        ${Proof_${target}_SOURCES} ${Proof_${target}_RESOURCES}
-        ${Proof_${target}_PUBLIC_HEADERS}
-        ${Proof_${target}_MOC_SOURCES}
-    )
-
+    if (ANDROID)
+        add_library(${target} SHARED
+            ${Proof_${target}_SOURCES} ${Proof_${target}_RESOURCES}
+            ${Proof_${target}_PUBLIC_HEADERS}
+            ${Proof_${target}_MOC_SOURCES}
+        )
+    else()
+        add_executable(${target}
+            ${Proof_${target}_SOURCES} ${Proof_${target}_RESOURCES}
+            ${Proof_${target}_PUBLIC_HEADERS}
+            ${Proof_${target}_MOC_SOURCES}
+        )
+    endif()
     proof_set_cxx_target_properties(${target})
-
     target_link_libraries(${target} ${QT_LIBS} ${PROOF_LIBS} ${_arg_OTHER_LIBS})
 
     if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
@@ -52,7 +59,7 @@ function(proof_add_app target)
         set(WRAPPER_TEXT "#!/bin/bash
 export LD_LIBRARY_PATH=/opt/Opensoft/${target}/lib:/opt/Opensoft/Qt/lib:$LD_LIBRARY_PATH
 exec /opt/Opensoft/${target}/bin/${target}-bin $1 $2 $3 $4 $5 $6 $7 $8 $9")
-        if(DEFINED _arg_HAS_UI)
+        if(_arg_HAS_UI)
             set(RESTARTER_TEXT "#!/bin/bash
 DISPLAY=:0.0 exec /opt/Opensoft/${target}/bin/${target}")
         else()
@@ -74,8 +81,8 @@ exec /opt/Opensoft/${target}/bin/${target}")
         if(NOT _arg_AUTOSTART)
             install(CODE "file(TOUCH \${CMAKE_INSTALL_PREFIX}/opt/Opensoft/proof-restarter/${target}/down)")
         endif()
-    elseif(ANDROID)
     endif()
+
 endfunction()
 
 function(proof_add_station target)
