@@ -13,6 +13,8 @@ macro(proof_project project_name)
     find_package(Qt5Core CONFIG REQUIRED)
     include(ProofAndroidApk OPTIONAL)
     add_compile_definitions(APP_VERSION=\"${_arg_VERSION}\")
+    include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+    list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 endmacro()
 
 function(proof_add_app target)
