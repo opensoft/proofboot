@@ -5,8 +5,13 @@ set(PROOF_VERSION 0.8.11.1)
 
 macro(proof_init)
     set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+if(NOT PROOF_FULL_BUILD)
     list(APPEND CMAKE_PREFIX_PATH "${CMAKE_INSTALL_PREFIX}/lib/cmake")
     list(APPEND CMAKE_PREFIX_PATH "${CMAKE_INSTALL_PREFIX}/lib/cmake/3rdparty")
+    if(ANDROID)
+        list(APPEND CMAKE_FIND_ROOT_PATH "${CMAKE_INSTALL_PREFIX}")
+    endif()
+endif()
 endmacro()
 
 function(__proof_find_module_root_dirname module_root dir_before)
@@ -107,7 +112,7 @@ function(proof_add_module target)
         FILES_MATCHING PATTERN "*.cmake"
     )
 
-    if ((NOT DEFINED PROOF_FULL_BUILD) OR PROOF_DEV_BUILD)
+    if ((NOT PROOF_FULL_BUILD) OR PROOF_DEV_BUILD)
         foreach(HEADER ${Proof_${target}_PRIVATE_HEADERS})
             get_filename_component(DEST ${HEADER} DIRECTORY)
             install(FILES ${HEADER} DESTINATION ${DEST})
@@ -162,6 +167,10 @@ function(proof_add_qml_plugin target)
 endfunction()
 
 function(proof_add_test target)
+    if (PROOF_SKIP_TESTS)
+        return()
+    endif()
+
     cmake_parse_arguments(_arg
         ""
         ""
@@ -196,6 +205,10 @@ function(proof_add_test target)
 endfunction()
 
 function(proof_add_tool target)
+    if (PROOF_SKIP_TOOLS)
+        return()
+    endif()
+
     cmake_parse_arguments(_arg
         ""
         ""
