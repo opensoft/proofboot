@@ -29,7 +29,7 @@ set -e
 
 mkdir $HOME/builder_logs;
 
-CLAZY_CHECKS="level3,container-inside-loop,inefficient-qlist,qhash-with-char-pointer-key,qstring-varargs,tr-non-literal,unneeded-cast,no-non-pod-global-static,no-ctor-missing-parent-argument,no-detaching-member,no-missing-typeinfo,no-inefficient-qlist"
+CLAZY_CHECKS="level3,container-inside-loop,ifndef-define-typo,inefficient-qlist,qhash-with-char-pointer-key,qstring-varargs,raw-environment-function,tr-non-literal,unneeded-cast,no-non-pod-global-static,no-ctor-missing-parent-argument,no-detaching-member,no-missing-typeinfo,no-inefficient-qlist"
 
 travis_fold start "prepare.docker" && travis_time_start;
 echo -e "\033[1;33mDownloading and starting Docker container...\033[0m";
