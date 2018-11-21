@@ -52,10 +52,10 @@ echo " ";
 
 travis_fold start "build.qmake" && travis_time_start;
 echo -e "\033[1;33mRunning qmake...\033[0m";
-echo "$ qmake -r 'QMAKE_CXX=clazy' 'DEFINES += STATIC_CODE_CHECK_BUILD' 'CONFIG += libs' 'QMAKE_CXXFLAGS += -ferror-limit=0 -fcolor-diagnostics $ISYSTEM -Xclang -plugin-arg-clang-lazy -Xclang $CLAZY_CHECKS' ../proof/proof.pro";
+echo "$ qmake -r 'QMAKE_CXX=clazy' 'DEFINES += STATIC_CODE_CHECK_BUILD' 'CONFIG += libs' 'QMAKE_CXXFLAGS += -ferror-limit=0 -fcolor-diagnostics $ISYSTEM -Xclang -plugin-arg-clazy -Xclang $CLAZY_CHECKS' ../proof/proof.pro";
 docker exec -t builder bash -c "exec 3>&1; set -o pipefail; rm -rf /sandbox/logs/*; mkdir build && cd build; \
     qmake -r 'QMAKE_CXX=clazy' 'DEFINES += STATIC_CODE_CHECK_BUILD' 'CONFIG += libs' \
-    'QMAKE_CXXFLAGS += -ferror-limit=0 -fcolor-diagnostics $ISYSTEM -Xclang -plugin-arg-clang-lazy -Xclang $CLAZY_CHECKS' \
+    'QMAKE_CXXFLAGS += -ferror-limit=0 -fcolor-diagnostics $ISYSTEM -Xclang -plugin-arg-clazy -Xclang $CLAZY_CHECKS' \
     ../proof/proof.pro 2>&1 1>&3 | (tee /sandbox/logs/errors.log 1>&2)";
 travis_time_finish && travis_fold end "build.qmake" && proofboot/travis/check_for_errorslog.sh qmake || true;
 echo " ";
