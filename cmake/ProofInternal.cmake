@@ -196,10 +196,12 @@ function(proof_add_test target)
     target_link_libraries(${target} ${PROOF_LIBS} proof-gtest)
 
     if (NOT ANDROID)
-        gtest_discover_tests(${target}
-            DISCOVERY_TIMEOUT 30
-            PROPERTIES TIMEOUT 30
-        )
+        if (NOT PROOF_SKIP_CTEST_TARGETS)
+            gtest_discover_tests(${target}
+                DISCOVERY_TIMEOUT 30
+                PROPERTIES TIMEOUT 30
+            )
+        endif()
         install(TARGETS ${target} RUNTIME DESTINATION tests)
     endif()
 endfunction()
