@@ -36,7 +36,7 @@ travis_fold start "prepare.docker" && travis_time_start;
 echo -e "\033[1;33mDownloading and starting Docker container...\033[0m";
 docker pull $DOCKER_IMAGE:latest;
 cp -R $HOME/proof-bin $HOME/proof-bin-copy
-docker run -id --name builder -w="/sandbox" -e "PROOF_PATH=/sandbox/bin" -e "QMAKEFEATURES=/sandbox/bin/features" \
+docker run -id --name builder -w="/sandbox" -e "NDK_CCACHE=ccache" \
     -v /usr/local/android-sdk:/opt/android/sdk \
     -v $(pwd):/sandbox/$TARGET_NAME  -v $HOME/proof-bin-copy:/sandbox/bin -v $HOME/builder_logs:/sandbox/logs \
     -v $HOME/builder_ccache:/root/.ccache -v $HOME/full_build:/sandbox/full_build \
@@ -56,45 +56,32 @@ docker exec -t builder sh -c "rm /opt/android/sdk/ndk-bundle.tar.xz";
 travis_time_finish && travis_fold end "prepare.android_ndk";
 echo " ";
 
-travis_fold start "build.bootstrap" && travis_time_start;
-echo -e "\033[1;33mBootstrapping...\033[0m";
-echo "$ bin/bootstrap.py --src $TARGET_NAME --dest bin --single-module";
-docker exec -t builder bash -c "exec 3>&1; set -o pipefail; rm -rf /sandbox/logs/*; \
-    bin/bootstrap.py --src $TARGET_NAME --dest bin --single-module 2>&1 1>&3 | (tee /sandbox/logs/errors.log 1>&2)";
-travis_time_finish && travis_fold end "build.bootstrap" && $HOME/proof-bin/dev-tools/travis/check_for_errorslog.sh bootstrap || true;
-echo " ";
-
-travis_fold start "build.qmake" && travis_time_start;
-echo -e "\033[1;33mRunning qmake...\033[0m";
-echo "$ /qmake_wrapper.sh ../$TARGET_NAME/$TARGET_NAME.pro";
+travis_fold start "build.cmake" && travis_time_start;
+echo -e "\033[1;33mRunning cmake...\033[0m";
+echo "$ cmake -DANDROID_PLATFORM=android-16 -DANDROID_STL=gnustl_shared -DANDROID_TOOLCHAIN=gcc -DNDK_CCACHE=ccache -DCMAKE_BUILD_TYPE=Debug -DCMAKE_FIND_ROOT_PATH=\$QTDIR -DCMAKE_INSTALL_PREFIX=/sandbox/bin -DCMAKE_TOOLCHAIN_FILE=\$ANDROID_NDK_ROOT/build/cmake/android.toolchain.cmake -G 'Unix Makefiles' ../$TARGET_NAME";
 docker exec -t builder bash -c "exec 3>&1; set -o pipefail; rm -rf /sandbox/logs/*; mkdir build && cd build; \
-    /qmake_wrapper.sh ../$TARGET_NAME/$TARGET_NAME.pro 2>&1 1>&3 | (tee /sandbox/logs/errors.log 1>&2)";
-travis_time_finish && travis_fold end "build.qmake" && $HOME/proof-bin/dev-tools/travis/check_for_errorslog.sh qmake || true;
+    cmake -DANDROID_PLATFORM=android-16 -DANDROID_STL=gnustl_shared -DANDROID_TOOLCHAIN=gcc -DNDK_CCACHE=ccache \
+        -DCMAKE_BUILD_TYPE=Debug -DCMAKE_FIND_ROOT_PATH=\$QTDIR -DCMAKE_INSTALL_PREFIX=/sandbox/bin \
+        -DCMAKE_TOOLCHAIN_FILE=\$ANDROID_NDK_ROOT/build/cmake/android.toolchain.cmake -G 'Unix Makefiles' \
+        ../$TARGET_NAME 2>&1 1>&3 | (tee /sandbox/logs/errors.log 1>&2)";
+travis_time_finish && travis_fold end "build.cmake" && $HOME/proof-bin/dev-tools/travis/check_for_errorslog.sh cmake || true;
 echo " ";
 
 travis_fold start "build.compile" && travis_time_start;
 echo -e "\033[1;33mCompiling...\033[0m";
-echo "$ make -j4";
-docker exec -t builder bash -c "exec 3>&1; set -o pipefail; rm -rf /sandbox/logs/*; cd build; make -j4 2>&1 1>&3 | (tee /sandbox/logs/errors.log 1>&2)";
+echo "$ cmake --build . --target all -- -j4";
+docker exec -t builder bash -c "exec 3>&1; set -o pipefail; rm -rf /sandbox/logs/*; cd build; \
+    cmake --build . --target all -- -j4 2>&1 1>&3 | (tee /sandbox/logs/errors.log 1>&2)";
 travis_time_finish && travis_fold end "build.compile" && $HOME/proof-bin/dev-tools/travis/check_for_errorslog.sh compilation || true;
 echo " ";
 
-if [ -f ${TARGET_NAME}_plugins.pro ]; then
-    travis_fold start "build.qmake_plugins" && travis_time_start;
-    echo -e "\033[1;33mRunning qmake for plugins...\033[0m";
-    echo "$ /qmake_wrapper.sh ../$TARGET_NAME/${TARGET_NAME}_plugins.pro";
-    docker exec -t builder bash -c "exec 3>&1; set -o pipefail; rm -rf /sandbox/logs/*; mkdir build_plugins && cd build_plugins; \
-        /qmake_wrapper.sh ../$TARGET_NAME/${TARGET_NAME}_plugins.pro 2>&1 1>&3 | (tee /sandbox/logs/errors.log 1>&2)";
-    travis_time_finish && travis_fold end "build.qmake_plugins" && $HOME/proof-bin/dev-tools/travis/check_for_errorslog.sh qmake || true;
-    echo " ";
-
-    travis_fold start "build.compile_plugins" && travis_time_start;
-    echo -e "\033[1;33mCompiling plugins...\033[0m";
-    echo "$ make -j4";
-    docker exec -t builder bash -c "exec 3>&1; set -o pipefail; rm -rf /sandbox/logs/*; cd build_plugins; make -j4 2>&1 1>&3 | (tee /sandbox/logs/errors.log 1>&2)";
-    travis_time_finish && travis_fold end "build.compile_plugins" && $HOME/proof-bin/dev-tools/travis/check_for_errorslog.sh compilation || true;
-    echo " ";
-fi
+travis_fold start "build.install" && travis_time_start;
+echo -e "\033[1;33mInstalling...\033[0m";
+echo "$ cmake --build . --target install";
+docker exec -t builder bash -c "exec 3>&1; set -o pipefail; rm -rf /sandbox/logs/*; cd build; \
+    cmake --build . --target install 2>&1 1>&3 | (tee /sandbox/logs/errors.log 1>&2)";
+travis_time_finish && travis_fold end "build.install" && $HOME/proof-bin/dev-tools/travis/check_for_errorslog.sh install || true;
+echo " ";
 
 travis_fold start "build.bin_cache_prepare" && travis_time_start;
 echo -e "\033[1;33mMoving bin to cacheable zone...\033[0m";

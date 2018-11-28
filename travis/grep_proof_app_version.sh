@@ -25,7 +25,6 @@
 
 # Author: denis.kormalev@opensoftdev.com (Denis Kormalev)
 
-(grep $1/lib/cmake/modules/ProofInternal.cmake --color=never -e "set(PROOF_VERSION" 2>/dev/null \
-    || grep $1/cmake/ProofInternal.cmake --color=never -e "set(PROOF_VERSION" 2>/dev/null \
-    || echo "set(PROOF_VERSION 0.0.0.0)"
-) | sed -E "s|set\(PROOF_VERSION +([^ ]*) *\)|\1|"
+(grep $1/CMakeLists.txt --color=never -e "proof_project(" 2>/dev/null \
+    || echo "proof_project(dummy VERSION 0.0.0.0)"
+) | sed -E "s|proof_project\(.*VERSION +([^ )]*).*|\1|"

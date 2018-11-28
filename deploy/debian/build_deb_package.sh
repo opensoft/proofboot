@@ -27,34 +27,8 @@
 
 set -e
 
-if [[ $# -lt 1 ]] ; then
-    echo "Usage: $0 [-f MANIFEST] [PROJECT_PATH]"
-    exit 0
-fi
-
-MANIFEST=""
-while getopts "f:" opt; do
-    case $opt in
-        f)
-            MANIFEST="$OPTARG"
-            ;;
-        \?)
-            echo "Invalid option" >&2
-            exit 1
-            ;;
-        :)
-            echo "Option -$OPTARG requires an argument." >&2
-            exit 1
-            ;;
-    esac
-done
-shift $(($OPTIND - 1))
-
 ROOT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-
-if [[ "x" == "x$MANIFEST" ]]; then
-    MANIFEST="$1/Manifest"
-fi
+MANIFEST="$1/Manifest"
 
 # Import project Manifest
 if [[ ! -f "$MANIFEST" ]]; then
@@ -67,33 +41,17 @@ if [ -n "$TARGET_NAME" ]; then
     PACKAGE_NAME="$TARGET_NAME"
 fi
 
-# Check for required variables
 if [ -z "$PACKAGE_NAME" ]; then
-    echo "Wrong Manifest file (PACKAGE_NAME not set)"
+    echo "PACKAGE_NAME or TARGET_NAME not set"
     exit 2
 fi
 
-if [ -z "$PROJECT_DIR" ]; then
-    PROJECT_DIR="$( cd "$( dirname "$MANIFEST" )" && pwd )"
-fi
-
-if [ -z "$PROJECT_FILE" ]; then
-    PROJECT_FILE="$PROJECT_DIR/$PACKAGE_NAME.pro"
-fi
-
-if [ -z $BUILD_ROOT ]; then
-    BUILD_ROOT="/tmp/build-$PACKAGE_NAME-$$"
-fi
-if [ -z "$PACKAGE_ROOT" ]; then
-    PACKAGE_ROOT="$BUILD_ROOT/package-$PACKAGE_NAME"
-fi
-
+PROJECT_DIR="$( cd "$1" && pwd )"
 APP_ROOT="$PACKAGE_ROOT/opt/Opensoft/$PACKAGE_NAME"
 
 if [ -z "$DESCRIPTION" ]; then
     DESCRIPTION="$PACKAGE_NAME"
 fi
-
 DESCRIPTION=`echo -n "$DESCRIPTION"`
 
 if [ -z "$MAINTAINER" ]; then
@@ -101,47 +59,13 @@ if [ -z "$MAINTAINER" ]; then
 fi
 
 # Building project
-mkdir -p "$BUILD_ROOT"
 mkdir -p "$PACKAGE_ROOT"
-cd "$BUILD_ROOT"
 
-# Remember PROOF_PATH if defined
-if [ -n "$PROOF_PATH" ]; then
-    export _PROOF_PATH="$PROOF_PATH"
-else
+if [ -z "$PROOF_PATH" ]; then
     export PROOF_PATH=/opt/Opensoft/proof;
 fi
-
-export LD_LIBRARY_PATH=$PROOF_PATH/lib;
-export QMAKEFEATURES=$PROOF_PATH/features;
-
-# Execute prebuild steps from Manifest
-if [ -n "$PREBUILD" ]; then
-    eval $PREBUILD
-fi
-
-# Build with custom PROOF_PATH instead of Manifested one
-if [ -n "$_PROOF_PATH" ]; then
-    export PROOF_PATH="$_PROOF_PATH"
-    export LD_LIBRARY_PATH=$PROOF_PATH/lib
-    export QMAKEFEATURES=$PROOF_PATH/features
-fi
-
-export LD_LIBRARY_PATH="/opt/Opensoft/Qt/lib:$LD_LIBRARY_PATH"
+export LD_LIBRARY_PATH="/opt/Opensoft/Qt/lib:$PROOF_PATH/lib"
 export PATH="/opt/Opensoft/Qt/bin:$PATH"
-
-cd "$BUILD_ROOT"
-
-if [ -z "$SKIP_BUILD_FOR_DEB_PACKAGE" ]; then
-    if [ -n "$EXTRA_QMAKE_CONFIG" ]; then
-        QMAKECONFIG="$QMAKECONFIG $EXTRA_QMAKE_CONFIG"
-    fi
-    qmake PREFIX="$PACKAGE_ROOT" "CONFIG+=$QMAKECONFIG" "$PROJECT_FILE"
-    make -j $(( $(cat /proc/cpuinfo | grep processor | wc -l) + 1 ))
-    make install
-else
-    echo "Skipping qmake & make stages because SKIP_BUILD_FOR_DEB_PACKAGE is set"
-fi
 
 "$ROOT/copy_proof_libs.sh" "$APP_ROOT" "$PROJECT_DIR"
 strip -v `find "$APP_ROOT" -type f \( -name "*-bin" -o -name "*.so*" \)`
@@ -149,16 +73,18 @@ strip -v `find "$APP_ROOT" -type f \( -name "*-bin" -o -name "*.so*" \)`
 if [ -z "$DEPENDS" ]; then
     # We don't need any system qt/qca stuff
     # We also don't need proof since we are copying it to app
-    export IGNORE_PACKAGES_PATTERN="^libqt:^libqca:^qml-module:fglrx:^proof:$IGNORE_PACKAGES_PATTERN";
+    export IGNORE_PACKAGES_PATTERN="^libqt:^libqca:^qml-module:fglrx:^proof:^libproxy:$IGNORE_PACKAGES_PATTERN";
     export VERSION_CHECK_PATTERN="qt5-opensoft:qca-opensoft:opencv-opensoft:qrencode:$VERSION_CHECK_PATTERN";
     DEPENDS="`"$ROOT/extract_app_dependencies.sh" "$PACKAGE_ROOT" | paste -s -d,`"
 fi
 echo "Depends found: $DEPENDS"
 
+BASE_DEPENDS="sudo,resolvconf,libproxy1v5,libproxy1-plugin-webkit"
+
 if [ -z "$DEPENDS" ]; then
-    DEPENDS="sudo,resolvconf"
+    DEPENDS=$BASE_DEPENDS
 else
-    DEPENDS="sudo,resolvconf,$DEPENDS"
+    DEPENDS="$BASE_DEPENDS,$DEPENDS"
 fi
 
 if [ -n "$EXTRA_DEPENDS" ]; then
@@ -178,7 +104,7 @@ if [ -n "$EXTRA_RECOMMENDS" ]; then
     RECOMMENDS="$RECOMMENDS,$EXTRA_RECOMMENDS"
 fi
 
-VERSION=`grep -e "VERSION\ =" $PROJECT_FILE | sed 's/^VERSION\ =\ \(.*\)/\1/'`
+VERSION=`$PROOF_PATH/dev-tools/travis/grep_proof_app_version.sh $PROJECT_DIR`
 PROOF_VERSION=`$PROOF_PATH/dev-tools/travis/grep_proof_version.sh $PROOF_PATH`
 
 # Building package
@@ -205,14 +131,4 @@ EOT
 echo "DEBIAN/control contents:"
 cat $PACKAGE_ROOT/DEBIAN/control
 
-if [ -n "$POSTBUILD" ]; then
-    eval $POSTBUILD
-fi
-
 fakeroot dpkg-deb --build "$PACKAGE_ROOT" "$PROJECT_DIR/$PACKAGE_NAME-${VERSION}-proof${PROOF_VERSION}.deb"
-
-if [ -z $SKIP_BUILD_FOR_DEB_PACKAGE ]; then
-    rm -rf "$BUILD_ROOT" || true
-else
-    echo "Skipping cleanup stage because SKIP_BUILD_FOR_DEB_PACKAGE is set"
-fi

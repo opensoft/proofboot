@@ -40,7 +40,7 @@ travis_fold start "prepare.docker" && travis_time_start;
 echo -e "\033[1;33mDownloading and starting Docker container...\033[0m";
 sudo rm -rf $HOME/full_build && mkdir $HOME/full_build;
 docker pull $DOCKER_IMAGE:latest;
-docker run -id --name builder -w="/sandbox" -e "PROOF_PATH=/sandbox/proof-bin" -e "QMAKEFEATURES=/sandbox/proof-bin/features" \
+docker run -id --name builder -w="/sandbox" \
     -v /usr/local/android-sdk:/opt/android/sdk \
     -v $(pwd):/sandbox/target_src -v $HOME/proof-bin:/sandbox/proof-bin -v $HOME/builder_logs:/sandbox/logs \
     -v $HOME/builder_ccache:/root/.ccache -v $HOME/full_build:/sandbox/full_build \
@@ -60,38 +60,24 @@ docker exec -t builder sh -c "rm /opt/android/sdk/ndk-bundle.tar.xz";
 travis_time_finish && travis_fold end "prepare.android_ndk";
 echo " ";
 
-travis_fold start "build.qmake" && travis_time_start;
-echo -e "\033[1;33mRunning qmake...\033[0m";
-echo "$ /qmake_wrapper.sh ../target_src/$TARGET_NAME.pro";
+travis_fold start "build.cmake" && travis_time_start;
+echo -e "\033[1;33mRunning cmake...\033[0m";
+echo "$ cmake -DANDROID_PLATFORM=android-16 -DANDROID_STL=gnustl_shared -DANDROID_TOOLCHAIN=gcc -DNDK_CCACHE=ccache -DCMAKE_BUILD_TYPE=Debug \"-DCMAKE_FIND_ROOT_PATH=\$QTDIR;/sandbox/proof-bin\" \"-DCMAKE_TOOLCHAIN_FILE=\$ANDROID_NDK_ROOT/build/cmake/android.toolchain.cmake\" -G 'Unix Makefiles' ../target_src";
 docker exec -t builder bash -c "exec 3>&1; set -o pipefail; rm -rf /sandbox/logs/*; mkdir build && cd build; \
-    /qmake_wrapper.sh ../target_src/$TARGET_NAME.pro 2>&1 1>&3 | (tee /sandbox/logs/errors.log 1>&2)";
-travis_time_finish && travis_fold end "build.qmake" && $HOME/proof-bin/dev-tools/travis/check_for_errorslog.sh qmake || true;
+    cmake -DANDROID_PLATFORM=android-16 -DANDROID_STL=gnustl_shared -DANDROID_TOOLCHAIN=gcc -DNDK_CCACHE=ccache \
+        -DCMAKE_BUILD_TYPE=Debug \"-DCMAKE_FIND_ROOT_PATH=\$QTDIR;/sandbox/proof-bin\" \
+        \"-DCMAKE_TOOLCHAIN_FILE=\$ANDROID_NDK_ROOT/build/cmake/android.toolchain.cmake\" -G 'Unix Makefiles' \
+        ../target_src 2>&1 1>&3 | (tee /sandbox/logs/errors.log 1>&2)";
+travis_time_finish && travis_fold end "build.cmake" && $HOME/proof-bin/dev-tools/travis/check_for_errorslog.sh cmake || true;
 echo " ";
 
 travis_fold start "build.compile" && travis_time_start;
 echo -e "\033[1;33mCompiling...\033[0m";
-echo "$ make -j4";
-docker exec -t builder bash -c "exec 3>&1; set -o pipefail; rm -rf /sandbox/logs/*; cd build; make -j4 2>&1 1>&3 | (tee /sandbox/logs/errors.log 1>&2)";
+echo "$ cmake --build . --target all -- -j4";
+docker exec -t builder bash -c "exec 3>&1; set -o pipefail; rm -rf /sandbox/logs/*; cd build; \
+    cmake --build . --target all -- -j4 2>&1 1>&3 | (tee /sandbox/logs/errors.log 1>&2)";
 travis_time_finish && travis_fold end "build.compile" && $HOME/proof-bin/dev-tools/travis/check_for_errorslog.sh compilation || true;
 echo " ";
 
-travis_fold start "build.install" && travis_time_start;
-echo -e "\033[1;33mMake install...\033[0m";
-echo "$ make INSTALL_ROOT=/sandbox/build/android-build install";
-docker exec -t builder bash -c "exec 3>&1; set -o pipefail; rm -rf /sandbox/logs/*; cd build; \
-    make INSTALL_ROOT=/sandbox/build/android-build install 2>&1 1>&3 | (tee /sandbox/logs/errors.log 1>&2)";
-travis_time_finish && travis_fold end "build.install" && $HOME/proof-bin/dev-tools/travis/check_for_errorslog.sh "make install" || true;
-echo " ";
-
-travis_fold start "build.apk" && travis_time_start;
-echo -e "\033[1;33mCreating APK...\033[0m";
-echo "$ androiddeployqt --input /sandbox/build/android-lib$TARGET_NAME.so-deployment-settings.json --output /sandbox/build/android-build --android-platform android-27 --jdk /usr/lib/jvm/java-8-openjdk-amd64 --gradle";
-docker exec -t builder bash -c "exec 3>&1; set -o pipefail; rm -rf /sandbox/logs/*; cd build; \
-    androiddeployqt --input /sandbox/build/android-lib$TARGET_NAME.so-deployment-settings.json \
-    --output /sandbox/build/android-build --android-platform android-27 \
-    --jdk /usr/lib/jvm/java-8-openjdk-amd64 --gradle 2>&1 1>&3 | (tee /sandbox/logs/errors.log 1>&2)";
-echo "$ mkdir -p /sandbox/full_build/debug && cp /sandbox/build/android-build/build/outputs/apk/android-build-debug.apk /sandbox/full_build/debug/$TARGET_NAME.apk";
-docker exec -t builder sh -c "mkdir -p /sandbox/full_build/debug \
-    && cp /sandbox/build/android-build/build/outputs/apk/android-build-debug.apk /sandbox/full_build/debug/$TARGET_NAME.apk";
-travis_time_finish && travis_fold end "build.apk" && $HOME/proof-bin/dev-tools/travis/check_for_errorslog.sh "apk packaging" || true;
-echo " ";
+echo "$ mkdir -p /sandbox/full_build/debug && cp /sandbox/build/$TARGET_NAME*.apk /sandbox/full_build/debug/$TARGET_NAME.apk";
+docker exec -t builder sh -c "mkdir -p /sandbox/full_build/debug && cp /sandbox/build/$TARGET_NAME*.apk /sandbox/full_build/debug/$TARGET_NAME.apk";

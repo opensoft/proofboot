@@ -30,9 +30,9 @@ set -e
 travis_fold start "prepare.docker" && travis_time_start;
 echo -e "\033[1;33mDownloading Docker container...\033[0m";
 docker pull opensoftdev/proof-runner:latest;
-docker run -id --name runner -w="/sandbox" -e "PROOF_PATH=/opt/Opensoft/proof" \
+docker run -id --name runner -w="/sandbox" \
     -v $(pwd):/sandbox/target_src -v $HOME/extra_s3_deps:/sandbox/extra_s3_deps \
-    -v $HOME/proof-bin:/opt/Opensoft/proof -v $HOME/tests_build:/sandbox/build opensoftdev/proof-runner tail -f /dev/null;
+    -v $HOME/proof-bin:/opt/Opensoft/proof -v $HOME/full_build:/sandbox/build opensoftdev/proof-runner tail -f /dev/null;
 docker ps;
 travis_time_finish && travis_fold end "prepare.docker";
 echo " ";
@@ -50,7 +50,7 @@ if [ -n "$EXTRA_DEPS" ]; then
     echo " ";
 fi
 
-if [ -n "$(ls -A $HOME/extra_s3_deps/*.deb)" ]; then
+if [ -n "$(ls -A $HOME/extra_s3_deps/*.deb 2>/dev/null)" ]; then
     travis_fold start "prepare.extra_s3_deps" && travis_time_start;
     echo -e "\033[1;33mInstalling extra dependencies downloaded from S3...\033[0m";
     docker exec -t runner bash -c "(dpkg -i /sandbox/extra_s3_deps/*.deb 2> /dev/null || apt-get -qq -f install -y --no-install-recommends)";
@@ -58,10 +58,8 @@ if [ -n "$(ls -A $HOME/extra_s3_deps/*.deb)" ]; then
     echo " ";
 fi
 
-travis_fold start "prepare.dirs" && travis_time_start;
-echo -e "\033[1;33mPreparing...\033[0m";
-docker exec runner bash -c "mkdir -p /root/.config/Opensoft && echo -e \"proof.*=false\nproofstation.*=false\" > /root/.config/Opensoft/proof_tests.qtlogging.rules";
-travis_time_finish && travis_fold end "prepare.dirs";
+echo -e "\033[1;33mMuting logging...\033[0m";
+docker exec runner bash -c "mkdir -p /root/.config/Opensoft && echo -e \"proof.*=false\nproofstations.*=false\nproofservices.*=false\" > /root/.config/Opensoft/proof_tests.qtlogging.rules";
 echo " ";
 
 # Add folding later here if will be needed for any apps

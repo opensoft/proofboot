@@ -33,7 +33,7 @@ if [ -n "$SKIP_UPLOAD" ]; then
     exit 0;
 fi
 
-APP_VERSION="$(grep -e 'VERSION\ =' $TARGET_NAME.pro | sed 's/^VERSION\ =\ \(.*\)/\1/')";
+APP_VERSION="$($HOME/proof-bin/dev-tools/travis/grep_proof_app_version.sh .)";
 
 echo -e "\033[1;32mApp version: $APP_VERSION\033[0m";
 if [ -n "$RELEASE_BUILD" ]; then
@@ -54,8 +54,7 @@ echo -e "\033[1;33mDownloading and starting Docker container...\033[0m";
 docker pull opensoftdev/proof-builder-base:latest;
 docker run -id --name builder -w="/sandbox" -v $(pwd):/sandbox/target_src -v $HOME/full_build:/sandbox/build \
     -v $HOME/proof-bin:/opt/Opensoft/proof -v $HOME/extra_s3_deps:/sandbox/extra_s3_deps \
-    -e "BUILD_ROOT=/sandbox/build" -e "PACKAGE_ROOT=/sandbox/package-$TARGET_NAME" -e "SKIP_BUILD_FOR_DEB_PACKAGE=true" -e "TARGET_NAME=$TARGET_NAME" \
-    -e "PROOF_PATH=/opt/Opensoft/proof" -e "QMAKEFEATURES=/opt/Opensoft/proof/features" \
+    -e "PACKAGE_ROOT=/sandbox/package-$TARGET_NAME" -e "TARGET_NAME=$TARGET_NAME" -e "PROOF_PATH=/opt/Opensoft/proof" \
     opensoftdev/proof-builder-base tail -f /dev/null;
 docker ps;
 travis_time_finish && travis_fold end "prepare.docker";
@@ -75,7 +74,7 @@ if [ -n "$EXTRA_DEPS" ]; then
     echo " ";
 fi
 
-if [ -n "$(ls -A $HOME/extra_s3_deps/*.deb)" ]; then
+if [ -n "$(ls -A $HOME/extra_s3_deps/*.deb 2>/dev/null)" ]; then
     travis_fold start "prepare.extra_s3_deps" && travis_time_start;
     echo -e "\033[1;33mInstalling extra dependencies downloaded from S3...\033[0m";
     docker exec -t builder bash -c "(dpkg -i /sandbox/extra_s3_deps/*.deb 2> /dev/null || apt-get -qq -f install -y --no-install-recommends)";
@@ -92,8 +91,8 @@ echo " ";
 
 travis_fold start "pack.deb" && travis_time_start;
 echo -e "\033[1;33mCreating deb package...\033[0m";
-echo "$ /opt/Opensoft/proof/dev-tools/deploy/debian/build_deb_package.sh -f /sandbox/target_src/Manifest /sandbox/target_src";
-docker exec -t builder bash -c "/opt/Opensoft/proof/dev-tools/deploy/debian/build_deb_package.sh -f /sandbox/target_src/Manifest /sandbox/target_src";
+echo "$ /opt/Opensoft/proof/dev-tools/deploy/debian/build_deb_package.sh /sandbox/target_src";
+docker exec -t builder bash -c "/opt/Opensoft/proof/dev-tools/deploy/debian/build_deb_package.sh /sandbox/target_src";
 travis_time_finish && travis_fold end "pack.deb";
 echo " ";
 

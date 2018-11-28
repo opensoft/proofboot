@@ -46,33 +46,36 @@ docker pull opensoftdev/proof-check-abi:latest;
 cp -R $HOME/proof-bin $HOME/proof-bin-copy;
 docker run -id --name builder -w="/sandbox" -v $(pwd):/sandbox/$TARGET_NAME -v $HOME/proof-bin-copy:/sandbox/bin \
     -v $HOME/builder_logs:/sandbox/logs -v $HOME/builder_ccache:/root/.ccache \
-    -e "PROOF_PATH=/sandbox/bin" -e "QMAKEFEATURES=/sandbox/bin/features" opensoftdev/proof-check-abi tail -f /dev/null;
+    opensoftdev/proof-check-abi tail -f /dev/null;
 docker ps;
 travis_time_finish && travis_fold end "prepare.docker";
 echo " ";
 
-travis_fold start "build.bootstrap" && travis_time_start;
-echo -e "\033[1;33mBootstrapping...\033[0m";
-echo "$ bin/bootstrap.py --src $TARGET_NAME --dest bin --single-module";
-docker exec -t builder bash -c "exec 3>&1; set -o pipefail; rm -rf /sandbox/logs/*; \
-    bin/bootstrap.py --src $TARGET_NAME --dest bin --single-module 2>&1 1>&3 | (tee /sandbox/logs/errors.log 1>&2)";
-travis_time_finish && travis_fold end "build.bootstrap" && $HOME/proof-bin/dev-tools/travis/check_for_errorslog.sh bootstrap || true;
-echo " ";
-
-travis_fold start "build.qmake" && travis_time_start;
-echo -e "\033[1;33mRunning qmake...\033[0m";
-echo "$ qmake -r 'CONFIG += debug' 'QMAKE_CXXFLAGS += -Og -isystem /opt/Opensoft/Qt/include' -spec linux-g++ ../$TARGET_NAME/$TARGET_NAME.pro";
+travis_fold start "build.cmake" && travis_time_start;
+echo -e "\033[1;33mRunning cmake...\033[0m";
+echo "$ cmake -DCMAKE_BUILD_TYPE=Debug '-DCMAKE_CXX_FLAGS=-g -Og -isystem /opt/Opensoft/Qt/include' -DCMAKE_INSTALL_PREFIX=/sandbox/bin -DCMAKE_PREFIX_PATH=/opt/Opensoft/Qt -G 'Unix Makefiles' ../$TARGET_NAME";
 docker exec -t builder bash -c "exec 3>&1; set -o pipefail; rm -rf /sandbox/logs/*; mkdir build && cd build; \
-    qmake -r 'CONFIG += debug' 'QMAKE_CXXFLAGS += -Og -isystem /opt/Opensoft/Qt/include' -spec linux-g++ \
-    ../$TARGET_NAME/$TARGET_NAME.pro 2>&1 1>&3 | (tee /sandbox/logs/errors.log 1>&2)";
-travis_time_finish && travis_fold end "build.qmake" && $HOME/proof-bin/dev-tools/travis/check_for_errorslog.sh qmake || true;
+    cmake -DCMAKE_BUILD_TYPE=Debug '-DCMAKE_CXX_FLAGS=-g -Og -isystem /opt/Opensoft/Qt/include' \
+        -DPROOF_SKIP_TOOLS:BOOL=ON -DPROOF_SKIP_TESTS:BOOL=ON \
+        -DCMAKE_INSTALL_PREFIX=/sandbox/bin -DCMAKE_PREFIX_PATH=/opt/Opensoft/Qt -G 'Unix Makefiles' \
+        ../$TARGET_NAME 2>&1 1>&3 | (tee /sandbox/logs/errors.log 1>&2)";
+travis_time_finish && travis_fold end "build.cmake" && $HOME/proof-bin/dev-tools/travis/check_for_errorslog.sh cmake || true;
 echo " ";
 
 travis_fold start "build.compile" && travis_time_start;
 echo -e "\033[1;33mCompiling...\033[0m";
-echo "$ make -j4";
-docker exec -t builder bash -c "exec 3>&1; set -o pipefail; rm -rf /sandbox/logs/*; cd build; make -j4 2>&1 1>&3 | (tee /sandbox/logs/errors.log 1>&2)";
+echo "$ cmake --build . --target all -- -j4";
+docker exec -t builder bash -c "exec 3>&1; set -o pipefail; rm -rf /sandbox/logs/*; cd build; \
+    cmake --build . --target all -- -j4 2>&1 1>&3 | (tee /sandbox/logs/errors.log 1>&2)";
 travis_time_finish && travis_fold end "build.compile" && $HOME/proof-bin/dev-tools/travis/check_for_errorslog.sh compilation || true;
+echo " ";
+
+travis_fold start "build.install" && travis_time_start;
+echo -e "\033[1;33mInstalling...\033[0m";
+echo "$ cmake --build . --target install";
+docker exec -t builder bash -c "exec 3>&1; set -o pipefail; rm -rf /sandbox/logs/*; cd build; \
+    cmake --build . --target install 2>&1 1>&3 | (tee /sandbox/logs/errors.log 1>&2)";
+travis_time_finish && travis_fold end "build.install" && $HOME/proof-bin/dev-tools/travis/check_for_errorslog.sh install || true;
 echo " ";
 
 PROOF_VERSION=`$HOME/proof-bin/dev-tools/travis/grep_proof_version.sh $HOME/proof-bin-copy`

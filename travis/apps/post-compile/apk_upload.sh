@@ -34,7 +34,7 @@ if [ -n "$SKIP_UPLOAD" ]; then
 fi
 
 if [ -z "$APP_VERSION" ]; then
-    APP_VERSION="$(grep -e 'VERSION\ =' $TARGET_NAME.pro | sed 's/^VERSION\ =\ \(.*\)/\1/')";
+    APP_VERSION="$($HOME/proof-bin/dev-tools/travis/grep_proof_app_version.sh .)";
 fi
 
 echo -e "\033[1;32mApp version: $APP_VERSION\033[0m";
