@@ -42,13 +42,13 @@ function(proof_add_app target)
         add_library(${target} SHARED
             ${Proof_${target}_SOURCES} ${Proof_${target}_RESOURCES}
             ${Proof_${target}_PUBLIC_HEADERS}
-            ${Proof_${target}_MOC_SOURCES}
+            ${Proof_${target}_MOC_SOURCES} ${Proof_${target}_MISC}
         )
     else()
         add_executable(${target}
             ${Proof_${target}_SOURCES} ${Proof_${target}_RESOURCES}
             ${Proof_${target}_PUBLIC_HEADERS}
-            ${Proof_${target}_MOC_SOURCES}
+            ${Proof_${target}_MOC_SOURCES} ${Proof_${target}_MISC}
         )
     endif()
     proof_set_cxx_target_properties(${target})
@@ -133,7 +133,7 @@ function(proof_add_app_test target)
     add_executable(${target}
         ${Proof_${target}_SOURCES} ${Proof_${target}_RESOURCES}
         ${Proof_${target}_PUBLIC_HEADERS}
-        ${Proof_${target}_MOC_SOURCES}
+        ${Proof_${target}_MOC_SOURCES} ${Proof_${target}_MISC}
     )
 
     proof_set_cxx_target_properties(${target})

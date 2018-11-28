@@ -50,7 +50,7 @@ function(proof_add_module target)
     add_library(${target} SHARED
         ${Proof_${target}_SOURCES} ${Proof_${target}_RESOURCES}
         ${Proof_${target}_PUBLIC_HEADERS} ${Proof_${target}_PRIVATE_HEADERS}
-        ${Proof_${target}_MOC_SOURCES}
+        ${Proof_${target}_MOC_SOURCES} ${Proof_${target}_MISC}
     )
     add_library("Proof::${target}" ALIAS ${target})
 
@@ -149,7 +149,7 @@ function(proof_add_qml_plugin target)
     add_library(${target} MODULE
         ${Proof_${target}_SOURCES} ${Proof_${target}_RESOURCES}
         ${Proof_${target}_PUBLIC_HEADERS} ${Proof_${target}_PRIVATE_HEADERS}
-        ${Proof_${target}_MOC_SOURCES}
+        ${Proof_${target}_MOC_SOURCES} ${Proof_${target}_MISC}
         ${_arg_QMLDIR}
     )
     proof_set_cxx_target_properties(${target})
@@ -185,7 +185,7 @@ function(proof_add_test target)
     add_executable(${target} main.cpp
         ${Proof_${target}_SOURCES} ${Proof_${target}_RESOURCES}
         ${Proof_${target}_PUBLIC_HEADERS} ${Proof_${target}_PRIVATE_HEADERS}
-        ${Proof_${target}_MOC_SOURCES}
+        ${Proof_${target}_MOC_SOURCES} ${Proof_${target}_MISC}
     )
 
     proof_set_cxx_target_properties(${target})
@@ -230,7 +230,7 @@ function(proof_add_tool target)
     add_executable(${target}
         ${Proof_${target}_SOURCES} ${Proof_${target}_RESOURCES}
         ${Proof_${target}_PUBLIC_HEADERS} ${Proof_${target}_PRIVATE_HEADERS}
-        ${Proof_${target}_MOC_SOURCES}
+        ${Proof_${target}_MOC_SOURCES} ${Proof_${target}_MISC}
     )
 
     proof_set_cxx_target_properties(${target})
