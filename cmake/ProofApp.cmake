@@ -146,3 +146,16 @@ function(proof_add_app_test target)
         )
     endif()
 endfunction()
+
+function(proof_parse_infusion_arguments prefix)
+    cmake_parse_arguments(_arg
+        ""
+        "PREFIX"
+        ""
+        ${ARGN}
+    )
+    if(NOT _arg_PREFIX)
+        set(_arg_PREFIX ".")
+    endif()
+    set(${prefix}_PREFIX ${_arg_PREFIX} PARENT_SCOPE)
+endfunction()
