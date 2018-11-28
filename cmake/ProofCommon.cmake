@@ -1,3 +1,5 @@
+set(__PROOF_MODULES_DIR ${CMAKE_CURRENT_LIST_DIR})
+
 function(proof_set_cxx_target_properties target)
     set_target_properties(${target} PROPERTIES
         CXX_STANDARD 14
@@ -55,3 +57,42 @@ macro(proof_update_parent_scope target)
         set(Proof_${target}_MISC ${Proof_${target}_MISC} PARENT_SCOPE)
     endif()
 endmacro()
+
+function(proof_add_translations target)
+    cmake_parse_arguments(_arg
+        ""
+        "PREFIX"
+        ""
+        ${ARGN}
+    )
+
+    find_package(Qt5LinguistTools REQUIRED)
+    set(LANGS en de es ja zh)
+    list(TRANSFORM LANGS PREPEND "${CMAKE_CURRENT_SOURCE_DIR}/translations/${_arg_PREFIX}${target}." OUTPUT_VARIABLE TS_FILES)
+    list(TRANSFORM TS_FILES APPEND ".ts")
+
+    if(PROOF_GENERATE_TRANSLATIONS)
+        set(translation_sources ${Proof_${target}_SOURCES} ${Proof_${target}_PUBLIC_HEADERS} ${Proof_${target}_PRIVATE_HEADERS})
+        if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/qml)
+            set(translation_sources ${translation_sources} ${CMAKE_CURRENT_SOURCE_DIR}/qml)
+        endif()
+        qt5_create_translation(QM_FILES ${translation_sources} ${TS_FILES})
+        set(add_translations 1)
+    elseif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/translations/${_arg_PREFIX}${target}.en.ts)
+        qt5_add_translation(QM_FILES ${TS_FILES})
+        set(add_translations 1)
+    endif()
+    if(add_translations)
+        add_custom_target(${target}_translations DEPENDS ${QM_FILES})
+        add_dependencies(${target} ${target}_translations)
+        set(qm_for_qrc ${LANGS})
+        list(TRANSFORM qm_for_qrc PREPEND "    <file>${_arg_PREFIX}${target}.")
+        list(TRANSFORM qm_for_qrc APPEND ".qm</file>")
+        list(JOIN qm_for_qrc "\n" translations_qrc_content)
+        file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/${target}_translations.qrc
+            "<RCC>\n  <qresource prefix=\"/translations\">\n${translations_qrc_content}\n  </qresource>\n</RCC>"
+        )
+        qt5_add_resources(TRANSLATIONS_QRC ${CMAKE_CURRENT_BINARY_DIR}/${target}_translations.qrc)
+        target_sources(${target} PRIVATE ${TRANSLATIONS_QRC})
+    endif()
+endfunction()
