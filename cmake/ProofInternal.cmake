@@ -79,7 +79,7 @@ function(proof_add_module target)
         )
     endif()
 
-    proof_add_translations(${target} PREFIX "Proof")
+    proof_add_translations(${target} PREFIX "Proof" TARGET_CMAKE_FOLDER "${module_root_dirname}/translations")
 
     target_link_libraries(${target}
         PUBLIC ${QT_LIBS} ${PROOF_LIBS} ${_arg_OTHER_LIBS}

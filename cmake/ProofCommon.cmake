@@ -61,7 +61,7 @@ endmacro()
 function(proof_add_translations target)
     cmake_parse_arguments(_arg
         ""
-        "PREFIX"
+        "PREFIX;TARGET_CMAKE_FOLDER"
         ""
         ${ARGN}
     )
@@ -84,6 +84,9 @@ function(proof_add_translations target)
     endif()
     if(add_translations)
         add_custom_target(${target}_translations DEPENDS ${QM_FILES})
+        if(_arg_TARGET_CMAKE_FOLDER)
+            set_target_properties(${target}_translations PROPERTIES FOLDER ${_arg_TARGET_CMAKE_FOLDER})
+        endif()
         add_dependencies(${target} ${target}_translations)
         set(qm_for_qrc ${LANGS})
         list(TRANSFORM qm_for_qrc PREPEND "    <file>${_arg_PREFIX}${target}.")
