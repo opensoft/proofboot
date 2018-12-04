@@ -93,8 +93,9 @@ function(proof_add_module target)
 
     install(TARGETS ${target}
         EXPORT Proof${target}Targets
-        LIBRARY DESTINATION lib
         RUNTIME DESTINATION lib
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib
     )
     install(EXPORT Proof${target}Targets DESTINATION lib/cmake
         NAMESPACE Proof::
