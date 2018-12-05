@@ -43,7 +43,7 @@ docker exec -t codestyle-check bash -c "find -iname '*.h' -o -iname '*.cpp' | gr
 travis_time_finish && travis_fold end "check.format";
 echo " ";
 
-echo -e "\033[1;35m$ git diff --stat:\033[0m" && git diff --shortstat;
+echo -e "\033[1;35m$ git diff --stat:\033[0m" && git diff --stat;
 echo -e "\033[1;35m$ git diff:\033[0m" && git diff;
 
 exit `git diff | wc -l`
