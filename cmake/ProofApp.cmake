@@ -81,25 +81,40 @@ function(proof_add_app target)
         )
         set(WRAPPER_TEXT "#!/bin/bash
 export LD_LIBRARY_PATH=/opt/Opensoft/${target}/lib:/opt/Opensoft/Qt/lib:$LD_LIBRARY_PATH
-exec /opt/Opensoft/${target}/bin/${target}-bin $1 $2 $3 $4 $5 $6 $7 $8 $9")
+exec /opt/Opensoft/${target}/bin/${target}-bin $1 $2 $3 $4 $5 $6 $7 $8 $9
+")
         if(_arg_HAS_UI)
             set(RESTARTER_TEXT "#!/bin/bash
-DISPLAY=:0.0 exec /opt/Opensoft/${target}/bin/${target}")
+DISPLAY=:0.0 exec /opt/Opensoft/${target}/bin/${target}
+")
         else()
             set(RESTARTER_TEXT "#!/bin/bash
-exec /opt/Opensoft/${target}/bin/${target}")
+exec /opt/Opensoft/${target}/bin/${target}
+")
         endif()
-        file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/wrapper.sh "${WRAPPER_TEXT}")
-        file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/restarter.sh "${RESTARTER_TEXT}")
-        install(FILES ${CMAKE_CURRENT_BINARY_DIR}/wrapper.sh
+        file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/debian)
+        file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/debian/supervise)
+        file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/debian/wrapper.sh "${WRAPPER_TEXT}")
+        file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/debian/restarter.sh "${RESTARTER_TEXT}")
+        install(FILES ${CMAKE_CURRENT_BINARY_DIR}/debian/wrapper.sh
             DESTINATION opt/Opensoft/${target}/bin
             RENAME ${target}
             PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
         )
-        install(FILES ${CMAKE_CURRENT_BINARY_DIR}/restarter.sh
+        install(FILES ${CMAKE_CURRENT_BINARY_DIR}/debian/restarter.sh
             DESTINATION opt/Opensoft/proof-restarter/${target}
             RENAME run
-            PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
+            PERMISSIONS
+            OWNER_READ OWNER_WRITE OWNER_EXECUTE
+            GROUP_READ GROUP_EXECUTE
+            WORLD_READ WORLD_EXECUTE
+        )
+        install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/debian/supervise
+            DESTINATION opt/Opensoft/proof-restarter/${target}
+            DIRECTORY_PERMISSIONS
+            OWNER_READ OWNER_WRITE OWNER_EXECUTE
+            GROUP_READ GROUP_WRITE GROUP_EXECUTE
+            WORLD_READ WORLD_WRITE WORLD_EXECUTE
         )
         if(NOT _arg_AUTOSTART)
             install(CODE "file(TOUCH \${CMAKE_INSTALL_PREFIX}/opt/Opensoft/proof-restarter/${target}/down)")
