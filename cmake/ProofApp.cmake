@@ -55,15 +55,16 @@ function(proof_add_app target)
         proof_add_target_misc(${target} ${CMAKE_CURRENT_SOURCE_DIR}/.travis.yml)
     endif()
 
+    proof_process_target_resources(${target})
     if (ANDROID)
         add_library(${target} SHARED
-            ${Proof_${target}_SOURCES} ${Proof_${target}_RESOURCES}
+            ${Proof_${target}_SOURCES} ${Proof_${target}_PROCESSED_RESOURCES}
             ${Proof_${target}_PUBLIC_HEADERS}
             ${Proof_${target}_MOC_SOURCES} ${Proof_${target}_MISC}
         )
     else()
         add_executable(${target}
-            ${Proof_${target}_SOURCES} ${Proof_${target}_RESOURCES}
+            ${Proof_${target}_SOURCES} ${Proof_${target}_PROCESSED_RESOURCES}
             ${Proof_${target}_PUBLIC_HEADERS}
             ${Proof_${target}_MOC_SOURCES} ${Proof_${target}_MISC}
         )
@@ -162,8 +163,10 @@ function(proof_add_app_test target)
         endif()
     endif()
 
+    proof_process_target_resources(${target})
+
     add_executable(${target}
-        ${Proof_${target}_SOURCES} ${Proof_${target}_RESOURCES}
+        ${Proof_${target}_SOURCES} ${Proof_${target}_PROCESSED_RESOURCES}
         ${Proof_${target}_PUBLIC_HEADERS}
         ${Proof_${target}_MOC_SOURCES} ${Proof_${target}_MISC}
     )

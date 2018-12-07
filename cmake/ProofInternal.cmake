@@ -47,8 +47,10 @@ function(proof_add_module target)
         set(PROOF_LIBS ${PROOF_LIBS} "Proof::${PROOF_LIB}")
     endforeach()
 
+    proof_process_target_resources(${target})
+
     add_library(${target} SHARED
-        ${Proof_${target}_SOURCES} ${Proof_${target}_RESOURCES}
+        ${Proof_${target}_SOURCES} ${Proof_${target}_PROCESSED_RESOURCES}
         ${Proof_${target}_PUBLIC_HEADERS} ${Proof_${target}_PRIVATE_HEADERS}
         ${Proof_${target}_MOC_SOURCES} ${Proof_${target}_MISC}
     )
@@ -149,8 +151,10 @@ function(proof_add_qml_plugin target)
         set(_arg_QMLDIR "${CMAKE_CURRENT_SOURCE_DIR}/qmldir")
     endif()
 
+    proof_process_target_resources(${target})
+
     add_library(${target} MODULE
-        ${Proof_${target}_SOURCES} ${Proof_${target}_RESOURCES}
+        ${Proof_${target}_SOURCES} ${Proof_${target}_PROCESSED_RESOURCES}
         ${Proof_${target}_PUBLIC_HEADERS} ${Proof_${target}_PRIVATE_HEADERS}
         ${Proof_${target}_MOC_SOURCES} ${Proof_${target}_MISC}
         ${_arg_QMLDIR}
@@ -185,8 +189,10 @@ function(proof_add_test target)
         set(PROOF_LIBS ${PROOF_LIBS} "Proof::${PROOF_LIB}")
     endforeach()
 
+    proof_process_target_resources(${target})
+
     add_executable(${target} main.cpp
-        ${Proof_${target}_SOURCES} ${Proof_${target}_RESOURCES}
+        ${Proof_${target}_SOURCES} ${Proof_${target}_PROCESSED_RESOURCES}
         ${Proof_${target}_PUBLIC_HEADERS} ${Proof_${target}_PRIVATE_HEADERS}
         ${Proof_${target}_MOC_SOURCES} ${Proof_${target}_MISC}
     )
@@ -230,8 +236,10 @@ function(proof_add_tool target)
         set(PROOF_LIBS ${PROOF_LIBS} "Proof::${PROOF_LIB}")
     endforeach()
 
+    proof_process_target_resources(${target})
+
     add_executable(${target}
-        ${Proof_${target}_SOURCES} ${Proof_${target}_RESOURCES}
+        ${Proof_${target}_SOURCES} ${Proof_${target}_PROCESSED_RESOURCES}
         ${Proof_${target}_PUBLIC_HEADERS} ${Proof_${target}_PRIVATE_HEADERS}
         ${Proof_${target}_MOC_SOURCES} ${Proof_${target}_MISC}
     )
