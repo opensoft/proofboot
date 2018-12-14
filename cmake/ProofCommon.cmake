@@ -7,7 +7,9 @@ function(proof_set_cxx_target_properties target)
         CXX_EXTENSIONS OFF
         POSITION_INDEPENDENT_CODE ON
         AUTOMOC ON
+        LINK_FLAGS "-Wl,-export-dynamic"
     )
+    target_compile_definitions(${target} PRIVATE QT_MESSAGELOGCONTEXT)
 endfunction()
 
 function(proof_process_target_resources target)
