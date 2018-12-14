@@ -1,5 +1,0 @@
-include(proof_common.prf)
-
-LIBS *= -L$$(PROOF_PATH)/lib
-clang:QMAKE_CXXFLAGS += -isystem $$(PROOF_PATH)/include
-INCLUDEPATH *= $$(PROOF_PATH)/include

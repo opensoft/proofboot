@@ -1,9 +1,0 @@
-include(proof.prf)
-
-LIBS *= -lproof-gtest
-
-msvc {
-    DEFINES += GTEST_LINKED_AS_SHARED_LIBRARY
-    DEFINES += _SILENCE_TR1_NAMESPACE_DEPRECATION_WARNING
-    QMAKE_CXXFLAGS += /wd4251 /wd4275
-}
