@@ -60,10 +60,10 @@ echo " ";
 
 travis_fold start "build.cmake" && travis_time_start;
 echo -e "\033[1;33mRunning cmake...\033[0m";
-echo "$ cmake -DANDROID_PLATFORM=android-16 -DANDROID_STL=c++_shared -DNDK_CCACHE=ccache -DCMAKE_BUILD_TYPE=Debug -DCMAKE_FIND_ROOT_PATH=\$QTDIR -DCMAKE_INSTALL_PREFIX=/sandbox/bin -DPROOF_CI_BUILD:BOOL=ON -DCMAKE_TOOLCHAIN_FILE=\$ANDROID_NDK_ROOT/build/cmake/android.toolchain.cmake -G 'Unix Makefiles' ../proof";
+echo "$ cmake -DANDROID_PLATFORM=android-16 -DANDROID_STL=c++_shared -DNDK_CCACHE=ccache -DCMAKE_BUILD_TYPE=Release -DCMAKE_FIND_ROOT_PATH=\$QTDIR -DCMAKE_INSTALL_PREFIX=/sandbox/bin -DPROOF_CI_BUILD:BOOL=ON -DCMAKE_TOOLCHAIN_FILE=\$ANDROID_NDK_ROOT/build/cmake/android.toolchain.cmake -G 'Unix Makefiles' ../proof";
 docker exec -t builder bash -c "exec 3>&1; set -o pipefail; rm -rf /sandbox/logs/*; mkdir build && cd build; \
     cmake -DANDROID_PLATFORM=android-16 -DANDROID_STL=c++_shared -DNDK_CCACHE=ccache \
-        -DCMAKE_BUILD_TYPE=Debug -DCMAKE_FIND_ROOT_PATH=\$QTDIR -DCMAKE_INSTALL_PREFIX=/sandbox/bin -DPROOF_CI_BUILD:BOOL=ON \
+        -DCMAKE_BUILD_TYPE=Release -DCMAKE_FIND_ROOT_PATH=\$QTDIR -DCMAKE_INSTALL_PREFIX=/sandbox/bin -DPROOF_CI_BUILD:BOOL=ON \
         -DCMAKE_TOOLCHAIN_FILE=\$ANDROID_NDK_ROOT/build/cmake/android.toolchain.cmake -G 'Unix Makefiles' \
         ../proof 2>&1 1>&3 | (tee /sandbox/logs/errors.log 1>&2)";
 travis_time_finish && travis_fold end "build.cmake" && proofboot/travis/check_for_errorslog.sh cmake || true;

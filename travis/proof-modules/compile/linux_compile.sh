@@ -45,9 +45,9 @@ echo " ";
 
 travis_fold start "build.cmake" && travis_time_start;
 echo -e "\033[1;33mRunning cmake...\033[0m";
-echo "$ cmake -DCMAKE_BUILD_TYPE=Debug '-DCMAKE_CXX_FLAGS=-ferror-limit=0 -fcolor-diagnostics' -DPROOF_SKIP_CTEST_TARGETS:BOOL=ON -DCMAKE_INSTALL_PREFIX=/sandbox/bin -DCMAKE_PREFIX_PATH=/opt/Opensoft/Qt -G 'Unix Makefiles' ../$TARGET_NAME";
+echo "$ cmake -DCMAKE_BUILD_TYPE=Release '-DCMAKE_CXX_FLAGS=-ferror-limit=0 -fcolor-diagnostics' -DPROOF_SKIP_CTEST_TARGETS:BOOL=ON -DCMAKE_INSTALL_PREFIX=/sandbox/bin -DCMAKE_PREFIX_PATH=/opt/Opensoft/Qt -G 'Unix Makefiles' ../$TARGET_NAME";
 docker exec -t builder bash -c "exec 3>&1; set -o pipefail; rm -rf /sandbox/logs/*; mkdir build && cd build; \
-    cmake -DCMAKE_BUILD_TYPE=Debug '-DCMAKE_CXX_FLAGS=-ferror-limit=0 -fcolor-diagnostics' \
+    cmake -DCMAKE_BUILD_TYPE=Release '-DCMAKE_CXX_FLAGS=-ferror-limit=0 -fcolor-diagnostics' \
         -DPROOF_SKIP_CTEST_TARGETS:BOOL=ON -DCMAKE_INSTALL_PREFIX=/sandbox/bin -DCMAKE_PREFIX_PATH=/opt/Opensoft/Qt -G 'Unix Makefiles' \
         ../$TARGET_NAME 2>&1 1>&3 | (tee /sandbox/logs/errors.log 1>&2)";
 travis_time_finish && travis_fold end "build.cmake" && $HOME/proof-bin/dev-tools/travis/check_for_errorslog.sh cmake || true;
