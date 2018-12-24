@@ -28,10 +28,13 @@
 set -e
 
 source $HOME/proof-bin/dev-tools/travis/detect_build_type.sh;
+
 if [ -n "$RELEASE_BUILD" ]; then
     DOCKER_IMAGE=opensoftdev/proof-builder-android-base;
+    CCACHE_CMD=
 else
     DOCKER_IMAGE=opensoftdev/proof-builder-android-ccache;
+    CCACHE_CMD=ccache
 fi
 
 mkdir $HOME/builder_logs;
@@ -62,9 +65,9 @@ echo " ";
 
 travis_fold start "build.cmake" && travis_time_start;
 echo -e "\033[1;33mRunning cmake...\033[0m";
-echo "$ cmake -DANDROID_PLATFORM=android-16 -DANDROID_STL=c++_shared -DNDK_CCACHE=ccache -DCMAKE_BUILD_TYPE=Release \"-DCMAKE_FIND_ROOT_PATH=\$QTDIR;/sandbox/proof-bin\" \"-DCMAKE_TOOLCHAIN_FILE=\$ANDROID_NDK_ROOT/build/cmake/android.toolchain.cmake\" -G 'Unix Makefiles' ../target_src";
+echo "$ cmake -DANDROID_PLATFORM=android-16 -DANDROID_STL=c++_shared -DNDK_CCACHE=$CCACHE_CMD -DCMAKE_BUILD_TYPE=Release \"-DCMAKE_FIND_ROOT_PATH=\$QTDIR;/sandbox/proof-bin\" \"-DCMAKE_TOOLCHAIN_FILE=\$ANDROID_NDK_ROOT/build/cmake/android.toolchain.cmake\" -G 'Unix Makefiles' ../target_src";
 docker exec -t builder bash -c "exec 3>&1; set -o pipefail; rm -rf /sandbox/logs/*; mkdir build && cd build; \
-    cmake -DANDROID_PLATFORM=android-16 -DANDROID_STL=c++_shared -DNDK_CCACHE=ccache \
+    cmake -DANDROID_PLATFORM=android-16 -DANDROID_STL=c++_shared -DNDK_CCACHE=$CCACHE_CMD \
         -DCMAKE_BUILD_TYPE=Release \"-DCMAKE_FIND_ROOT_PATH=\$QTDIR;/sandbox/proof-bin\" \
         \"-DCMAKE_TOOLCHAIN_FILE=\$ANDROID_NDK_ROOT/build/cmake/android.toolchain.cmake\" -G 'Unix Makefiles' \
         ../target_src 2>&1 1>&3 | (tee /sandbox/logs/errors.log 1>&2)";
