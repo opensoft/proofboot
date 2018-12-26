@@ -9,7 +9,7 @@ function(proof_set_cxx_target_properties target)
         AUTOMOC ON
         LINK_FLAGS "-Wl,-export-dynamic"
     )
-    target_compile_definitions(${target} PRIVATE QT_MESSAGELOGCONTEXT)
+    target_compile_definitions(${target} PRIVATE QT_MESSAGELOGCONTEXT QT_DISABLE_DEPRECATED_BEFORE=0x060000)
 endfunction()
 
 function(proof_process_target_resources target)
