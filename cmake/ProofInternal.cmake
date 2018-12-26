@@ -166,6 +166,9 @@ function(proof_add_qml_plugin target)
         CXX_VISIBILITY_PRESET hidden
         FOLDER "${module_root_dirname}/plugins"
     )
+    if(WIN32)
+        set_target_properties(${target} PROPERTIES PREFIX "")
+    endif()
 
     target_link_libraries(${target} PUBLIC Qt5::Qml ${PROOF_LIBS})
 
