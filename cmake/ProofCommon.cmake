@@ -7,8 +7,10 @@ function(proof_set_cxx_target_properties target)
         CXX_EXTENSIONS OFF
         POSITION_INDEPENDENT_CODE ON
         AUTOMOC ON
-        LINK_FLAGS "-Wl,-export-dynamic"
     )
+    if(NOT WIN32)
+        set_target_properties(${target} PROPERTIES LINK_FLAGS "-Wl,-export-dynamic")
+    endif()
     target_compile_definitions(${target} PRIVATE QT_MESSAGELOGCONTEXT QT_DISABLE_DEPRECATED_BEFORE=0x060000)
 endfunction()
 
