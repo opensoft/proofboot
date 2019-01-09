@@ -124,7 +124,7 @@ function(proof_add_module target)
         endforeach()
     endif()
 
-    if (((PROOF_FULL_BUILD AND PROOF_CI_BUILD) OR PROOF_DEV_BUILD) AND _arg_HAS_QML)
+    if (((PROOF_FULL_BUILD AND PROOF_CI_BUILD) OR PROOF_DEV_BUILD OR ANDROID) AND _arg_HAS_QML)
         install(DIRECTORY qml
             DESTINATION .
             FILES_MATCHING PATTERN "*.qml" PATTERN "*.js" PATTERN "qmldir"
