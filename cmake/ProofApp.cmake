@@ -81,7 +81,7 @@ function(proof_add_app target)
             RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}/opt/Opensoft/${target}/bin"
         )
         set(WRAPPER_TEXT "#!/bin/bash
-export LD_LIBRARY_PATH=/opt/Opensoft/${target}/lib:/opt/Opensoft/Qt/lib:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=/opt/Opensoft/${target}/lib:/opt/Opensoft/Qt/lib:/usr/local/lib:$LD_LIBRARY_PATH
 exec /opt/Opensoft/${target}/bin/${target}-bin $1 $2 $3 $4 $5 $6 $7 $8 $9
 ")
         if(_arg_HAS_UI)
