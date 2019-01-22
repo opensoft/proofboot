@@ -113,6 +113,14 @@ if [ -z "SKIP_DEB_SCRIPTS" ]; then
     cp -R "$ROOT"/DEBIAN/* "$PACKAGE_ROOT"/DEBIAN/;
     sed -E "s|##APP_RESTARTER_PATH##|/opt/Opensoft/proof-restarter/$PACKAGE_NAME|" -i "$PACKAGE_ROOT"/DEBIAN/preinst;
     sed -E "s|##APP_RESTARTER_PATH##|/opt/Opensoft/proof-restarter/$PACKAGE_NAME|" -i "$PACKAGE_ROOT"/DEBIAN/postinst;
+    if [[ -f "$PROJECT_DIR"/DEBIAN/preinst_extra ]]; then
+        echo '# Addition from app' >> "$PACKAGE_ROOT"/DEBIAN/preinst
+        cat "$PROJECT_DIR"/DEBIAN/preinst_extra >> "$PACKAGE_ROOT"/DEBIAN/preinst
+    fi
+    if [[ -f "$PROJECT_DIR"/DEBIAN/postinst_extra ]]; then
+        echo '# Addition from app' >> "$PACKAGE_ROOT"/DEBIAN/postinst
+        cat "$PROJECT_DIR"/DEBIAN/postinst_extra >> "$PACKAGE_ROOT"/DEBIAN/postinst
+    fi
 fi
 
 cat << EOT > "$PACKAGE_ROOT/DEBIAN/control"
