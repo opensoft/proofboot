@@ -15,6 +15,31 @@ if ! grep -q /etc/sudoers.d/proof -e '%proof ALL=NOPASSWD: /sbin/shutdown' >/dev
         echo "%proof ALL=NOPASSWD: /sbin/shutdown" >> /etc/sudoers.d/proof
 fi
 
-if ! grep -q /etc/sudoers.d/proof -e '%proof ALL=NOPASSWD: /usr/bin/apt-get' >/dev/null 2>&1; then
-        echo "%proof ALL=NOPASSWD: /usr/bin/apt-get" >> /etc/sudoers.d/proof
+if ! grep -q /etc/sudoers.d/proof -e '%proof ALL=(root) NOPASSWD: /sbin/ifup' >/dev/null 2>&1; then
+        echo "%proof ALL=(root) NOPASSWD: /sbin/ifup" >> /etc/sudoers.d/proof
 fi
+
+if ! grep -q /etc/sudoers.d/proof -e '%proof ALL=(root) NOPASSWD: /sbin/ifdown' >/dev/null 2>&1; then
+        echo "%proof ALL=(root) NOPASSWD: /sbin/ifdown" >> /etc/sudoers.d/proof
+fi
+
+if ! grep -q /etc/sudoers.d/proof -e '%proof ALL=(root) NOPASSWD: /usr/sbin/openvpn' >/dev/null 2>&1; then
+        echo "%proof ALL=(root) NOPASSWD: /usr/sbin/openvpn" >> /etc/sudoers.d/proof
+fi
+
+if ! grep -q /etc/sudoers.d/proof -e '%proof ALL=(root) NOPASSWD: /usr/bin/pkill openvpn' >/dev/null 2>&1; then
+        echo "%proof ALL=(root) NOPASSWD: /usr/bin/pkill openvpn" >> /etc/sudoers.d/proof
+fi
+
+if ! grep -q /etc/sudoers.d/proof -e '%proof ALL=(root) NOPASSWD: /bin/cp /tmp/interfaces_tmp /etc/network/interfaces' >/dev/null 2>&1; then
+        echo "%proof ALL=(root) NOPASSWD: /bin/cp /tmp/interfaces_tmp /etc/network/interfaces" >> /etc/sudoers.d/proof
+fi
+
+if ! grep -q /etc/sudoers.d/proof -e '%proof ALL=(root) NOPASSWD: /bin/cp /tmp/opensoft-external-customers-vpn.conf /etc/openvpn/opensoft-external-customers-vpn.conf' >/dev/null 2>&1; then
+        echo "%proof ALL=(root) NOPASSWD: /bin/cp /tmp/opensoft-external-customers-vpn.conf /etc/openvpn/opensoft-external-customers-vpn.conf" >> /etc/sudoers.d/proof
+fi
+
+if ! grep -q /etc/sudoers.d/proof -e '%proof ALL=(root) NOPASSWD: /bin/touch /etc/openvpn/opensoft-external-customers-vpn.conf' >/dev/null 2>&1; then
+        echo "%proof ALL=(root) NOPASSWD: /bin/touch /etc/openvpn/opensoft-external-customers-vpn.conf" >> /etc/sudoers.d/proof
+fi
+
