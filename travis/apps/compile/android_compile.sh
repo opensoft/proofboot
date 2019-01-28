@@ -43,7 +43,7 @@ travis_fold start "prepare.docker" && travis_time_start;
 echo -e "\033[1;33mDownloading and starting Docker container...\033[0m";
 sudo rm -rf $HOME/full_build && mkdir $HOME/full_build;
 docker pull $DOCKER_IMAGE:latest;
-docker run -id --name builder -w="/sandbox" \
+docker run --privileged -id --name builder -w="/sandbox" \
     -v /usr/local/android-sdk:/opt/android/sdk \
     -v $(pwd):/sandbox/target_src -v $HOME/proof-bin:/sandbox/proof-bin -v $HOME/builder_logs:/sandbox/logs \
     -v $HOME/builder_ccache:/root/.ccache -v $HOME/full_build:/sandbox/full_build \

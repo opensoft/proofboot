@@ -32,7 +32,7 @@ git config --global color.ui always;
 travis_fold start "prepare.docker" && travis_time_start;
 echo -e "\033[1;33mDownloading and starting Docker container...\033[0m";
 docker pull opensoftdev/proof-check-codestyle:latest;
-docker run -id --name codestyle-check -v $(pwd):/sandbox/target_src -w="/sandbox/target_src" opensoftdev/proof-check-codestyle tail -f /dev/null;
+docker run --privileged -id --name codestyle-check -v $(pwd):/sandbox/target_src -w="/sandbox/target_src" opensoftdev/proof-check-codestyle tail -f /dev/null;
 docker ps;
 travis_time_finish && travis_fold end "prepare.docker";
 echo " ";

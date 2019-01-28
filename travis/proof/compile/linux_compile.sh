@@ -29,17 +29,17 @@ set -e
 
 source proofboot/travis/detect_build_type.sh;
 if [ -n "$RELEASE_BUILD" ]; then
-    DOCKER_IMAGE=opensoftdev/proof-builder-base;
+    DOCKER_IMAGE=opensoftdev/proof-builder-base:latest;
 else
-    DOCKER_IMAGE=opensoftdev/proof-builder-ccache;
+    DOCKER_IMAGE=opensoftdev/proof-builder-ccache:latest;
 fi
 
 mkdir $HOME/builder_logs;
 
 travis_fold start "prepare.docker" && travis_time_start;
 echo -e "\033[1;33mDownloading and starting Docker container...\033[0m";
-docker pull $DOCKER_IMAGE:latest;
-docker run -id --name builder -w="/sandbox" -v $(pwd):/sandbox/proof \
+docker pull $DOCKER_IMAGE;
+docker run --privileged -id --name builder -w="/sandbox" -v $(pwd):/sandbox/proof \
     -v $HOME/builder_logs:/sandbox/logs -v $HOME/builder_ccache:/root/.ccache -v $HOME/full_build:/sandbox/full_build \
     $DOCKER_IMAGE tail -f /dev/null;
 docker ps;

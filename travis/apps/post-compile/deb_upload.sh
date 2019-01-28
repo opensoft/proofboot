@@ -52,7 +52,7 @@ echo " ";
 travis_fold start "prepare.docker" && travis_time_start;
 echo -e "\033[1;33mDownloading and starting Docker container...\033[0m";
 docker pull opensoftdev/proof-builder-base:latest;
-docker run -id --name builder -w="/sandbox" -v $(pwd):/sandbox/target_src -v $HOME/full_build:/sandbox/build \
+docker run --privileged -id --name builder -w="/sandbox" -v $(pwd):/sandbox/target_src -v $HOME/full_build:/sandbox/build \
     -v $HOME/proof-bin:/opt/Opensoft/proof -v $HOME/extra_s3_deps:/sandbox/extra_s3_deps \
     -e "PACKAGE_ROOT=/sandbox/package-$TARGET_NAME" -e "TARGET_NAME=$TARGET_NAME" -e "PROOF_PATH=/opt/Opensoft/proof" \
     opensoftdev/proof-builder-base tail -f /dev/null;

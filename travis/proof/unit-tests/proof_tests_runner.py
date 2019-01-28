@@ -38,7 +38,7 @@ def travis_fold(name):
     sys.stdout.write('travis_fold:end:tests.{}\r'.format(name))
 
 def run_in_docker(command):
-    docker_status = subprocess.call('docker run -id --name runner '
+    docker_status = subprocess.call('docker run --privileged -id --name runner '
                                    '-v $HOME/proof-bin:/opt/Opensoft/proof opensoftdev/proof-runner tail -f /dev/null',
                                    shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     if docker_status != 0:

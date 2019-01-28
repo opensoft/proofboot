@@ -36,7 +36,7 @@ travis_fold start "prepare.docker" && travis_time_start;
 echo -e "\033[1;33mDownloading and starting Docker container...\033[0m";
 docker pull $DOCKER_IMAGE:latest;
 cp -R $HOME/proof-bin $HOME/proof-bin-copy;
-docker run -id --name builder -w="/sandbox" -v $(pwd):/sandbox/$TARGET_NAME -v $HOME/proof-bin-copy:/sandbox/bin \
+docker run --privileged -id --name builder -w="/sandbox" -v $(pwd):/sandbox/$TARGET_NAME -v $HOME/proof-bin-copy:/sandbox/bin \
     -v $HOME/builder_logs:/sandbox/logs -v $HOME/builder_ccache:/root/.ccache -v $HOME/full_build:/sandbox/full_build \
     $DOCKER_IMAGE tail -f /dev/null;
 docker ps;
