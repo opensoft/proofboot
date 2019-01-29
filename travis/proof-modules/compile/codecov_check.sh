@@ -37,7 +37,8 @@ mkdir $HOME/builder_logs;
 travis_fold start "prepare.docker" && travis_time_start;
 echo -e "\033[1;33mDownloading and starting Docker container...\033[0m";
 docker pull $DOCKER_IMAGE;
-docker run --privileged -id --name builder -w="/sandbox" -v $(pwd):/sandbox/proof \
+cp -R $HOME/proof-bin $HOME/proof-bin-copy;
+docker run --privileged -id --name builder -w="/sandbox" -v $(pwd):/sandbox/$TARGET_NAME -v $HOME/proof-bin-copy:/sandbox/bin \
     -v $HOME/builder_logs:/sandbox/logs -v $HOME/builder_ccache:/root/.ccache \
     $DOCKER_IMAGE tail -f /dev/null;
 docker ps;
@@ -46,11 +47,11 @@ echo " ";
 
 travis_fold start "build.cmake" && travis_time_start;
 echo -e "\033[1;33mRunning cmake...\033[0m";
-echo "$ cmake -DCMAKE_BUILD_TYPE=Debug '-DCMAKE_CXX_FLAGS=-fdiagnostics-color' -DPROOF_ADD_CODE_COVERAGE:BOOL=ON -DPROOF_CI_BUILD:BOOL=ON -DCMAKE_PREFIX_PATH=/opt/Opensoft/Qt -G 'Unix Makefiles' ../proof";
+echo "$ cmake -DCMAKE_BUILD_TYPE=Debug '-DCMAKE_CXX_FLAGS=-fdiagnostics-color' -DPROOF_ADD_CODE_COVERAGE:BOOL=ON -DPROOF_CI_BUILD:BOOL=ON -DCMAKE_PREFIX_PATH=/opt/Opensoft/Qt -G 'Unix Makefiles' ../$TARGET_NAME";
 docker exec -t builder bash -c "exec 3>&1; set -o pipefail; rm -rf /sandbox/logs/*; mkdir build && cd build; \
     cmake -DCMAKE_BUILD_TYPE=Debug '-DCMAKE_CXX_FLAGS=-fdiagnostics-color' -DPROOF_ADD_CODE_COVERAGE:BOOL=ON -DPROOF_CI_BUILD:BOOL=ON \
-        -DCMAKE_PREFIX_PATH=/opt/Opensoft/Qt -G 'Unix Makefiles' \
-        ../proof 2>&1 1>&3 | (tee /sandbox/logs/errors.log 1>&2)";
+        -DCMAKE_INSTALL_PREFIX=/sandbox/bin -DCMAKE_PREFIX_PATH=/opt/Opensoft/Qt -G 'Unix Makefiles' \
+        ../$TARGET_NAME 2>&1 1>&3 | (tee /sandbox/logs/errors.log 1>&2)";
 travis_time_finish && travis_fold end "build.cmake" && proofboot/travis/check_for_errorslog.sh cmake || true;
 echo " ";
 
