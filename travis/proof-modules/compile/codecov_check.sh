@@ -92,11 +92,11 @@ echo " ";
 
 travis_fold start "lcov.combine" && travis_time_start;
 echo -e "\033[1;33mCombining coverage data...\033[0m";
-echo "$ lcov --add-tracefile code_coverage.baseline --add-tracefile code_coverage.after_tests --output-file /sandbox/proof/code_coverage.total";
-docker exec -t builder bash -c "lcov --add-tracefile code_coverage.baseline --add-tracefile code_coverage.after_tests --output-file /sandbox/proof/code_coverage.total";
+echo "$ lcov --add-tracefile code_coverage.baseline --add-tracefile code_coverage.after_tests --output-file /sandbox/$TARGET_NAME/code_coverage.total";
+docker exec -t builder bash -c "lcov --add-tracefile code_coverage.baseline --add-tracefile code_coverage.after_tests --output-file /sandbox/$TARGET_NAME/code_coverage.total";
 echo " ";
-echo "$ lcov --list /sandbox/proof/code_coverage.total";
-docker exec -t builder bash -c "lcov --list /sandbox/proof/code_coverage.total";
+echo "$ lcov --list /sandbox/$TARGET_NAME/code_coverage.total";
+docker exec -t builder bash -c "lcov --list /sandbox/$TARGET_NAME/code_coverage.total";
 travis_time_finish && travis_fold end "lcov.combine";
 echo " ";
 
