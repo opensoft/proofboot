@@ -27,7 +27,6 @@
 
 set -e
 
-source proofboot/travis/detect_build_type.sh;
 DOCKER_IMAGE=opensoftdev/proof-check-codecoverage:latest;
 
 LCOV_REMOVALS="'*/3rdparty/*' '*/tests/*' '*/proofhardware*' '*/tools/*' '*/plugins/*' '*amqp*' '*/proofcv/*' '*/proofgui/*' '*/bin/*' '*/build/*'"
@@ -41,6 +40,7 @@ docker run --privileged -id --name builder -w="/sandbox" -v $(pwd):/sandbox/proo
     -v $HOME/builder_logs:/sandbox/logs -v $HOME/builder_ccache:/root/.ccache \
     $DOCKER_IMAGE tail -f /dev/null;
 docker ps;
+docker exec builder bash -c "mkdir -p /root/.config/Opensoft && echo -e \"proof.*=false\nproofstations.*=false\nproofservices.*=false\" > /root/.config/Opensoft/proof_tests.qtlogging.rules"
 travis_time_finish && travis_fold end "prepare.docker";
 echo " ";
 
@@ -64,8 +64,8 @@ echo " ";
 
 travis_fold start "lcov.initial" && travis_time_start;
 echo -e "\033[1;33mCollecting initial coverage data...\033[0m";
-echo "$ lcov --no-external --capture --initial --directory . --output-file code_coverage.baseline";
-docker exec -t builder bash -c "lcov --no-external --capture --initial --directory . --output-file code_coverage.baseline";
+echo "$ lcov --no-external --capture --initial --directory . --output-file code_coverage.baseline | grep -v 'ignoring data for external file'";
+docker exec -t builder bash -c "lcov --no-external --capture --initial --directory . --output-file code_coverage.baseline | grep -v 'ignoring data for external file'";
 echo " ";
 echo "$ lcov --remove code_coverage.baseline $LCOV_REMOVALS --output-file code_coverage.baseline";
 docker exec -t builder bash -c "lcov --remove code_coverage.baseline $LCOV_REMOVALS --output-file code_coverage.baseline";
@@ -81,8 +81,8 @@ echo " ";
 
 travis_fold start "lcov.after_tests" && travis_time_start;
 echo -e "\033[1;33mCollecting coverage data after tests...\033[0m";
-echo "$ lcov --no-external --capture --directory . --output-file code_coverage.after_tests";
-docker exec -t builder bash -c "lcov --no-external --capture --directory . --output-file code_coverage.after_tests";
+echo "$ lcov --no-external --capture --directory . --output-file code_coverage.after_tests | grep -v 'ignoring data for external file'";
+docker exec -t builder bash -c "lcov --no-external --capture --directory . --output-file code_coverage.after_tests | grep -v 'ignoring data for external file'";
 echo " ";
 echo "$ lcov --remove code_coverage.after_tests $LCOV_REMOVALS --output-file code_coverage.after_tests";
 docker exec -t builder bash -c "lcov --remove code_coverage.after_tests $LCOV_REMOVALS --output-file code_coverage.after_tests";
