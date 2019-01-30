@@ -29,7 +29,7 @@ set -e
 
 DOCKER_IMAGE=opensoftdev/proof-check-codecoverage:latest;
 
-LCOV_REMOVALS="'*/3rdparty/*' '*/tests/*' '*/proofhardware*' '*/tools/*' '*/plugins/*' '*amqp*' '*/proofcv/*' '*/proofgui/*' '*/bin/*' '*/build/*'"
+LCOV_REMOVALS="'*/3rdparty/*' '*/tests/*' '*/proofhardware*' '*/tools/*' '*/plugins/*' '*/proofcv/*' '*/proofgui/*' '*/bin/*' '*/build/*'"
 
 mkdir $HOME/builder_logs;
 
@@ -47,7 +47,7 @@ echo " ";
 
 travis_fold start "build.cmake" && travis_time_start;
 echo -e "\033[1;33mRunning cmake...\033[0m";
-echo "$ cmake -DCMAKE_BUILD_TYPE=Debug '-DCMAKE_CXX_FLAGS=-fdiagnostics-color' -DPROOF_ADD_CODE_COVERAGE:BOOL=ON -DPROOF_CI_BUILD:BOOL=ON -DCMAKE_PREFIX_PATH=/opt/Opensoft/Qt -G 'Unix Makefiles' ../$TARGET_NAME";
+echo "$ cmake -DCMAKE_BUILD_TYPE=Debug '-DCMAKE_CXX_FLAGS=-fdiagnostics-color' -DPROOF_ADD_CODE_COVERAGE:BOOL=ON -DPROOF_CI_BUILD:BOOL=ON -DCMAKE_INSTALL_PREFIX=/sandbox/bin -DCMAKE_PREFIX_PATH=/opt/Opensoft/Qt -G 'Unix Makefiles' ../$TARGET_NAME";
 docker exec -t builder bash -c "exec 3>&1; set -o pipefail; rm -rf /sandbox/logs/*; mkdir build && cd build; \
     cmake -DCMAKE_BUILD_TYPE=Debug '-DCMAKE_CXX_FLAGS=-fdiagnostics-color' -DPROOF_ADD_CODE_COVERAGE:BOOL=ON -DPROOF_CI_BUILD:BOOL=ON \
         -DCMAKE_INSTALL_PREFIX=/sandbox/bin -DCMAKE_PREFIX_PATH=/opt/Opensoft/Qt -G 'Unix Makefiles' \

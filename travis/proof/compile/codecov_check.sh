@@ -29,7 +29,7 @@ set -e
 
 DOCKER_IMAGE=opensoftdev/proof-check-codecoverage:latest;
 
-LCOV_REMOVALS="'*/3rdparty/*' '*/tests/*' '*/proofhardware*' '*/tools/*' '*/plugins/*' '*amqp*' '*/proofcv/*' '*/proofgui/*' '*/bin/*' '*/build/*'"
+LCOV_REMOVALS="'*/3rdparty/*' '*/tests/*' '*/proofhardware*' '*/tools/*' '*/plugins/*' '*/proofcv/*' '*/proofgui/*' '*/bin/*' '*/build/*'"
 
 mkdir $HOME/builder_logs;
 
