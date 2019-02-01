@@ -54,7 +54,7 @@ docker exec -t builder bash -c "exec 3>&1; set -o pipefail; rm -rf /sandbox/logs
     cmake -DCMAKE_BUILD_TYPE=Debug '-DCMAKE_CXX_FLAGS=-fdiagnostics-color' -DPROOF_ADD_CODE_COVERAGE:BOOL=ON -DPROOF_CI_BUILD:BOOL=ON \
         -DCMAKE_INSTALL_PREFIX=/sandbox/bin -DCMAKE_PREFIX_PATH=/opt/Opensoft/Qt -G 'Unix Makefiles' \
         ../$TARGET_NAME 2>&1 1>&3 | (tee /sandbox/logs/errors.log 1>&2)";
-travis_time_finish && travis_fold end "build.cmake" && proofboot/travis/check_for_errorslog.sh cmake || true;
+travis_time_finish && travis_fold end "build.cmake" && $HOME/proof-bin/dev-tools/travis/check_for_errorslog.sh cmake || true;
 echo " ";
 
 travis_fold start "build.compile" && travis_time_start;
@@ -62,7 +62,7 @@ echo -e "\033[1;33mCompiling...\033[0m";
 echo "$ cmake --build . --target all -- -j4";
 docker exec -t builder bash -c "exec 3>&1; set -o pipefail; rm -rf /sandbox/logs/*; cd build; \
     cmake --build . --target all -- -j4 2>&1 1>&3 | (tee /sandbox/logs/errors.log 1>&2)";
-travis_time_finish && travis_fold end "build.compile" && proofboot/travis/check_for_errorslog.sh compilation || true;
+travis_time_finish && travis_fold end "build.compile" && $HOME/proof-bin/dev-tools/travis/check_for_errorslog.sh compilation || true;
 echo " ";
 
 travis_fold start "lcov.initial" && travis_time_start;
