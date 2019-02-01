@@ -29,7 +29,9 @@ set -e
 
 DOCKER_IMAGE=opensoftdev/proof-check-codecoverage:latest;
 
-LCOV_REMOVALS="'*/3rdparty/*' '*/tests/*' '*/proofhardware*' '*/tools/*' '*/plugins/*' '*/proofcv/*' '*/proofgui/*' '*/bin/*' '*/build/*'"
+if [ -z "$LCOV_REMOVALS" ]; then
+    LCOV_REMOVALS="'*/3rdparty/*' '*/tests/*' '*/tools/*' '*/plugins/*' '*/proofhardware*' '*/proofcv/*' '*/proofgui/*' '*/bin/*' '*/build/*'"
+fi
 
 mkdir $HOME/builder_logs;
 
@@ -103,3 +105,10 @@ travis_fold start "codecov.io" && travis_time_start;
 echo -e "\033[1;33mSending coverage data to codecov.io...\033[0m";
 bash <(curl -s https://codecov.io/bash) -f code_coverage.total;
 travis_time_finish && travis_fold end "codecov.io";
+echo " ";
+
+travis_fold start "cache.prepare" && travis_time_start;
+echo -e "\033[1;33mRemoving *.gcno and *.gcda files from ccache...\033[0m";
+find $HOME/builder_ccache -name "*.gcno" -delete;
+find $HOME/builder_ccache -name "*.gcda" -delete;
+travis_time_finish && travis_fold end "cache.prepare";
