@@ -23,6 +23,10 @@ if (PROOF_ADD_CODE_COVERAGE AND NOT ANDROID)
     endif()
     unset(PROOF_CODE_COVERAGE_ADDED)
 endif()
+
+if (PROOF_CLANG_TIDY)
+    set(PROOF_SKIP_TESTS ON)
+endif()
 endmacro()
 
 function(__proof_find_module_root_dirname module_root dir_before)
