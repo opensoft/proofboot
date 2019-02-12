@@ -38,7 +38,7 @@ echo " ";
 travis_fold start "prepare.docker" && travis_time_start;
 echo -e "\033[1;33mDownloading and starting Docker container...\033[0m";
 docker pull opensoftdev/proof-check-abi:latest;
-docker run -id --name builder -w="/sandbox" -v $(pwd):/sandbox/proof \
+docker run --privileged -id --name builder -w="/sandbox" -v $(pwd):/sandbox/proof \
     -v $HOME/builder_logs:/sandbox/logs -v $HOME/builder_ccache:/root/.ccache \
     opensoftdev/proof-check-abi tail -f /dev/null;
 docker ps;

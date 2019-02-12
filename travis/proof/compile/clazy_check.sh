@@ -35,7 +35,7 @@ CLAZY_CHECKS="level3,container-inside-loop,qhash-with-char-pointer-key,qstring-v
 travis_fold start "prepare.docker" && travis_time_start;
 echo -e "\033[1;33mDownloading and starting Docker container...\033[0m";
 docker pull opensoftdev/proof-builder-clazy:latest;
-docker run -id --name builder -w="/sandbox"  -e "CLAZY_IGNORE_DIRS='/usr/.*|/opt/Opensoft/Qt.*|.*3rdparty/.*|.*tests/.*'" \
+docker run --privileged -id --name builder -w="/sandbox"  -e "CLAZY_IGNORE_DIRS='/usr/.*|/opt/Opensoft/Qt.*|.*3rdparty/.*|.*tests/.*'" \
     -v $(pwd):/sandbox/proof -v $HOME/builder_logs:/sandbox/logs \
     opensoftdev/proof-builder-clazy tail -f /dev/null;
 docker ps;

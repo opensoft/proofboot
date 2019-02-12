@@ -79,7 +79,7 @@ travis_time_finish;
 travis_fold start "prepare.docker" && travis_time_start;
 echo -e "\033[1;33mDownloading and starting Docker container...\033[0m";
 docker pull opensoftdev/proof-builder-base:latest;
-docker run -id --name builder -w="/sandbox" -v $HOME/tools-src:/sandbox/target_src -v $HOME/tools-bin:/sandbox/build -v $HOME/proof-bin:/opt/Opensoft/proof \
+docker run --privileged -id --name builder -w="/sandbox" -v $HOME/tools-src:/sandbox/target_src -v $HOME/tools-bin:/sandbox/build -v $HOME/proof-bin:/opt/Opensoft/proof \
     -e "PACKAGE_ROOT=/sandbox/build" -e "TARGET_NAME=$TARGET_NAME" -e "SKIP_DEB_SCRIPTS=true" -e "PROOF_PATH=/opt/Opensoft/proof" \
     opensoftdev/proof-builder-base tail -f /dev/null;
 docker ps;

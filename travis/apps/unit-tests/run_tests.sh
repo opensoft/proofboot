@@ -30,7 +30,7 @@ set -e
 travis_fold start "prepare.docker" && travis_time_start;
 echo -e "\033[1;33mDownloading Docker container...\033[0m";
 docker pull opensoftdev/proof-runner:latest;
-docker run -id --name runner -w="/sandbox" \
+docker run --privileged -id --name runner -w="/sandbox" \
     -v $(pwd):/sandbox/target_src -v $HOME/extra_s3_deps:/sandbox/extra_s3_deps \
     -v $HOME/proof-bin:/opt/Opensoft/proof -v $HOME/full_build:/sandbox/build opensoftdev/proof-runner tail -f /dev/null;
 docker ps;
