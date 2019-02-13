@@ -2,7 +2,7 @@ set(__PROOF_MODULES_DIR ${CMAKE_CURRENT_LIST_DIR})
 
 function(proof_set_cxx_target_properties target)
     set_target_properties(${target} PROPERTIES
-        CXX_STANDARD 14
+        CXX_STANDARD 17
         CXX_STANDARD_REQUIRED ON
         CXX_EXTENSIONS OFF
         POSITION_INDEPENDENT_CODE ON
