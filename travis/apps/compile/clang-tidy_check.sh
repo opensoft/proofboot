@@ -34,10 +34,10 @@ mkdir $HOME/builder_logs;
 
 travis_fold start "prepare.docker" && travis_time_start;
 echo -e "\033[1;33mDownloading and starting Docker container...\033[0m";
-sudo rm -rf $HOME/full_build && mkdir $HOME/full_build;
 docker pull $DOCKER_IMAGE:latest;
+cp -R $HOME/proof-bin $HOME/proof-bin-copy;
 docker run --privileged -id --name builder -w="/sandbox" \
-    -v $(pwd):/sandbox/target_src -v $HOME/proof-bin:/sandbox/proof-bin -v $HOME/builder_logs:/sandbox/logs \
+    -v $(pwd):/sandbox/target_src -v $HOME/proof-bin-copy:/sandbox/proof-bin -v $HOME/builder_logs:/sandbox/logs \
     -v $HOME/extra_s3_deps:/sandbox/extra_s3_deps $DOCKER_IMAGE tail -f /dev/null;
 docker ps;
 travis_time_finish && travis_fold end "prepare.docker";
