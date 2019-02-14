@@ -26,6 +26,7 @@ endif()
 
 if (PROOF_CLANG_TIDY)
     set(PROOF_SKIP_TESTS ON)
+    set(PROOF_SKIP_TOOLS ON)
 endif()
 endmacro()
 
