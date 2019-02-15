@@ -8,7 +8,11 @@ function(proof_set_cxx_target_properties target)
         POSITION_INDEPENDENT_CODE ON
         AUTOMOC ON
     )
-    if(NOT WIN32)
+    if (WIN32)
+        if (MSVC)
+            target_compile_options(${target} PUBLIC /bigobj /W4 $<$<CONFIG:Debug>:/ZI>)
+        endif()
+    else()
         set_target_properties(${target} PROPERTIES LINK_FLAGS "-Wl,-export-dynamic")
     endif()
     target_compile_definitions(${target} PRIVATE QT_MESSAGELOGCONTEXT QT_DISABLE_DEPRECATED_BEFORE=0x060000)
