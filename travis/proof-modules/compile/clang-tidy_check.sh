@@ -53,9 +53,11 @@ docker exec -t builder bash -c "exec 3>&1; set -o pipefail; rm -rf /sandbox/logs
 travis_time_finish && travis_fold end "build.cmake" && $HOME/proof-bin/dev-tools/travis/check_for_errorslog.sh cmake || true;
 echo " ";
 
-echo -e "\033[1;33mMoving 3rdparty to non_tidy folder...\033[0m";
-docker exec -t builder bash -c "mkdir -p /sandbox/non_tidy && mv /sandbox/$TARGET_NAME/3rdparty /sandbox/non_tidy/" || true;
-echo " ";
+if [ -z "$TIDY_KEEP_3RDPARTY" ]; then
+    echo -e "\033[1;33mMoving 3rdparty to non_tidy folder...\033[0m";
+    docker exec -t builder bash -c "mkdir -p /sandbox/non_tidy && mv /sandbox/$TARGET_NAME/3rdparty /sandbox/non_tidy/" || true;
+    echo " ";
+fi
 
 travis_fold start "build.clang-tidy" && travis_time_start;
 echo -e "\033[1;33mRunning clang-tidy...\033[0m";
