@@ -86,7 +86,7 @@ function(proof_add_translations target)
     )
 
     find_package(Qt5LinguistTools REQUIRED)
-    set(LANGS en de es ja zh)
+    set(LANGS en de es ja zh ru)
     list(TRANSFORM LANGS PREPEND "${CMAKE_CURRENT_SOURCE_DIR}/translations/${_arg_PREFIX}${target}." OUTPUT_VARIABLE TS_FILES)
     list(TRANSFORM TS_FILES APPEND ".ts")
 
