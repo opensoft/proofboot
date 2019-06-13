@@ -66,15 +66,21 @@ fi
 
 travis_fold start "build.cmake" && travis_time_start;
 echo -e "\033[1;33mRunning cmake...\033[0m";
-echo "$ cmake -DCMAKE_BUILD_TYPE=Debug '-DCMAKE_CXX_FLAGS=-ferror-limit=0 -fcolor-diagnostics -stdlib=libc++ -isystem /usr/lib/llvm-7/include/c++/v1' -DPROOF_SKIP_TESTS:BOOL=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \"-DCMAKE_PREFIX_PATH=/opt/Opensoft/Qt;/sandbox/proof-bin\" -G 'Unix Makefiles' ../target_src";
+echo "$ cmake -DCMAKE_BUILD_TYPE=Debug '-DCMAKE_CXX_FLAGS=-ferror-limit=0 -fcolor-diagnostics -stdlib=libc++ -isystem /usr/lib/llvm-7/include/c++/v1' -DPROOF_CLANG_TIDY=ON -DPROOF_SKIP_TESTS:BOOL=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \"-DCMAKE_PREFIX_PATH=/opt/Opensoft/Qt;/sandbox/proof-bin\" -G 'Unix Makefiles' ../target_src";
 docker exec -t builder bash -c "exec 3>&1; set -o pipefail; rm -rf /sandbox/logs/*; mkdir build && cd build; \
     cmake -DCMAKE_BUILD_TYPE=Debug \
-        '-DCMAKE_CXX_FLAGS=-ferror-limit=0 -fcolor-diagnostics -stdlib=libc++ -isystem /usr/lib/llvm-7/include/c++/v1' \
-        -DPROOF_SKIP_TESTS:BOOL=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+        '-DCMAKE_CXX_FLAGS=-ferror-limit=0 -fcolor-diagnostics -stdlib=libc++ -isystem /usr/lib/llvm-7/include/c++/v1 -isystem /sandbox/non_tidy' \
+        -DPROOF_CLANG_TIDY=ON -DPROOF_SKIP_TESTS:BOOL=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
         \"-DCMAKE_PREFIX_PATH=/opt/Opensoft/Qt;/sandbox/proof-bin\" -G 'Unix Makefiles' \
         ../target_src 2>&1 1>&3 | (tee /sandbox/logs/errors.log 1>&2)";
 travis_time_finish && travis_fold end "build.cmake" && $HOME/proof-bin/dev-tools/travis/check_for_errorslog.sh cmake || true;
 echo " ";
+
+if [ -z "$TIDY_KEEP_3RDPARTY" ]; then
+    echo -e "\033[1;33mMoving 3rdparty to non_tidy folder...\033[0m";
+    docker exec -t builder bash -c "mkdir -p /sandbox/non_tidy && mv /sandbox/target_src/3rdparty /sandbox/non_tidy/" || true;
+    echo " ";
+fi
 
 travis_fold start "build.clang-tidy" && travis_time_start;
 echo -e "\033[1;33mRunning clang-tidy...\033[0m";
