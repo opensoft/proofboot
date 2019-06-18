@@ -87,5 +87,12 @@ echo -e "\033[1;33mRunning clang-tidy...\033[0m";
 echo "$ run-clang-tidy-opensoft.py -header-filter='.*(h|cpp)$' -checks='-*,$CLANG_TIDY_CHECKS' -j4 -quiet";
 docker exec -t builder bash -c "rm -rf /sandbox/logs/*; cd build; \
     run-clang-tidy-opensoft.py -header-filter='.*(h|cpp)$' -checks='-*,$CLANG_TIDY_CHECKS' -j4 -quiet > /sandbox/logs/errors.log" || true;
-travis_time_finish && travis_fold end "build.clang-tidy" && $HOME/proof-bin/dev-tools/travis/check_for_errorslog.sh clang-tidy || true;
+travis_time_finish && travis_fold end "build.clang-tidy";
+
+if [ -n "$CLANG_TIDY_WARNINGS_ALLOWED" ]; then
+    $HOME/proof-bin/dev-tools/travis/check_for_errorslog.sh clang-tidy || true;
+else
+    $HOME/proof-bin/dev-tools/travis/check_for_errorslog.sh clang-tidy;
+fi
+
 echo " ";
