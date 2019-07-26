@@ -62,6 +62,16 @@ function(proof_add_module target)
         set(PROOF_LIBS ${PROOF_LIBS} "Proof::${PROOF_LIB}")
     endforeach()
 
+    if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/CHANGELOG.md)
+        proof_add_target_misc(${target} ${CMAKE_CURRENT_SOURCE_DIR}/CHANGELOG.md)
+    endif()
+    if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/UPGRADE.md)
+        proof_add_target_misc(${target} ${CMAKE_CURRENT_SOURCE_DIR}/UPGRADE.md)
+    endif()
+    if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/README.md)
+        proof_add_target_misc(${target} ${CMAKE_CURRENT_SOURCE_DIR}/README.md)
+    endif()
+
     proof_process_target_resources(${target})
 
     add_library(${target} SHARED
@@ -214,7 +224,6 @@ function(proof_add_test target)
         ${Proof_${target}_PUBLIC_HEADERS} ${Proof_${target}_PRIVATE_HEADERS}
         ${Proof_${target}_MOC_SOURCES} ${Proof_${target}_MISC}
     )
-
     proof_set_cxx_target_properties(${target})
     __proof_find_module_root_dirname(module_root_dirname "tests")
     set_target_properties(${target} PROPERTIES
