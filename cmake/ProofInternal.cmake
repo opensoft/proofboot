@@ -1,7 +1,7 @@
 include(GoogleTest)
 include(ProofCommon)
 
-set(PROOF_VERSION 0.19.4.3)
+set(PROOF_VERSION 0.19.8.7)
 
 macro(proof_init)
     set_property(GLOBAL PROPERTY USE_FOLDERS ON)
