@@ -27,41 +27,59 @@
 
 set -e
 
-source $HOME/proof-bin/dev-tools/travis/detect_build_type.sh;
-if [ -n "$SKIP_UPLOAD" ]; then
-    -e "\033[1;33mSkipping artifact upload\033[0m";
-    exit 0;
-fi
-
 APP_VERSION="$($HOME/proof-bin/dev-tools/travis/grep_proof_app_version.sh .)";
-
-echo -e "\033[1;32mApp version: $APP_VERSION\033[0m";
-if [ -n "$RELEASE_BUILD" ]; then
-    echo -e "\033[1;32mWill be uploaded as release to __releases/$TARGET_NAME folder\033[0m";
-else
-    echo -e "\033[1;32mWill be uploaded to $TRAVIS_BRANCH/$TARGET_NAME-$APP_VERSION-$TRAVIS_BRANCH.deb\033[0m";
-fi
-echo " ";
-
-travis_fold start "prepare.awscli" && travis_time_start;
-echo -e "\033[1;33mInstalling awscli...\033[0m";
-pip install --user awscli;
-travis_time_finish && travis_fold end "prepare.awscli";
-echo " ";
 
 $HOME/proof-bin/dev-tools/travis/pack_app_deb_helper.sh
 
 DEB_FILENAME=`find -maxdepth 1 -name "$TARGET_NAME-*.deb" -exec basename "{}" \; -quit`
-if [ -z  "$DEB_FILENAME" ]; then
+if [ -z "$DEB_FILENAME" ]; then
     echo -e "\033[1;31mCan't find created deb package, halting\033[0m";
     exit 1
 fi
 
 travis_time_start;
-echo -e "\033[1;33mUploading to AWS S3...\033[0m";
-if [ -n "$RELEASE_BUILD" ]; then
-    $HOME/proof-bin/dev-tools/travis/s3_upload.sh "$DEB_FILENAME" __releases/$TARGET_NAME "$DEB_FILENAME";
+echo -e "\033[1;33mCreating docker image...\033[0m";
+mkdir build && mv $DEB_FILENAME build/;
+
+if [ ! -f Dockerfile ]; then
+cat << EOT > Dockerfile
+COPY build/*.deb /build/
+
+RUN apt-get -qq update \
+    && if [ -n "$USE_OPENCV" ]; then (dpkg -i /prebuilt-extras/*opencv*.deb 2> /dev/null || apt-get -qq -f install -y --no-install-recommends); fi \
+    && cd /build && (dpkg -i *.deb 2> /dev/null || apt-get -qq -f install -y --no-install-recommends) \
+    && rm -rf /build && /image_cleaner.sh
+
+USER proof:proof
+
+VOLUME ["/home/proof"]
+
+ENTRYPOINT exec /opt/Opensoft/$TARGET_NAME/bin/$TARGET_NAME
+EOT
+fi
+
+echo "Dockerfile contents:"
+cat Dockerfile;
+docker build -t opensoftdev/$TARGET_NAME -f Dockerfile ./;
+
+if [ -n "$TRAVIS_TAG" ]; then
+    docker tag opensoftdev/$TARGET_NAME $DOCKER_REGISTRY/$TARGET_NAME:$APP_VERSION;
+    docker tag opensoftdev/$TARGET_NAME $DOCKER_REGISTRY/$TARGET_NAME:latest;
+    docker tag opensoftdev/$TARGET_NAME $DOCKER_REGISTRY/$TARGET_NAME-prod:$APP_VERSION;
+    docker tag opensoftdev/$TARGET_NAME $DOCKER_REGISTRY/$TARGET_NAME-prod:latest;
 else
-    $HOME/proof-bin/dev-tools/travis/s3_upload.sh "$DEB_FILENAME" $TRAVIS_BRANCH $TARGET_NAME-$APP_VERSION-$TRAVIS_BRANCH.deb;
+    docker tag opensoftdev/$TARGET_NAME $DOCKER_REGISTRY/$TARGET_NAME:$TRAVIS_BRANCH-$APP_VERSION;
+    docker tag opensoftdev/$TARGET_NAME $DOCKER_REGISTRY/$TARGET_NAME:$TRAVIS_BRANCH-latest;
 fi
 travis_time_finish
+
+source $HOME/proof-bin/dev-tools/travis/detect_build_type.sh;
+if [ -z "$SKIP_UPLOAD" ]; then
+    travis_time_start;
+    echo -e "\033[1;33mPushing docker image to registry...\033[0m";
+    echo "$DOCKER_PASSWORD" | docker login -u $DOCKER_USERNAME --password-stdin $DOCKER_REGISTRY;
+    for img in `docker images --format "{{.Repository}}:{{.Tag}}" $DOCKER_REGISTRY/$TARGET_NAME* | grep -v "<none>"`; do
+        docker push $img;
+    done
+    travis_time_finish;
+fi
