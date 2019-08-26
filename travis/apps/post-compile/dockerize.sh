@@ -52,7 +52,7 @@ RUN apt-get -qq update \
 USER proof:proof
 VOLUME /home/proof/.config/Opensoft /home/proof/.local/share/Opensoft/prooflogs \
 /home/proof/.local/share/Opensoft/$TARGET_NAME /home/proof/.cache/Opensoft/$TARGET_NAME $EXTRA_DOCKER_VOLUMES
-ENTRYPOINT exec /opt/Opensoft/$TARGET_NAME/bin/$TARGET_NAME
+ENTRYPOINT ["/opt/Opensoft/$TARGET_NAME/bin/$TARGET_NAME"]
 EOT
 fi
 
