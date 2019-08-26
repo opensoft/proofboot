@@ -43,23 +43,21 @@ mkdir build && mv $DEB_FILENAME build/;
 
 if [ ! -f Dockerfile ]; then
 cat << EOT > Dockerfile
+FROM opensoftdev/proof-app-deploy-base
 COPY build/*.deb /build/
-
 RUN apt-get -qq update \
     && if [ -n "$USE_OPENCV" ]; then (dpkg -i /prebuilt-extras/*opencv*.deb 2> /dev/null || apt-get -qq -f install -y --no-install-recommends); fi \
     && cd /build && (dpkg -i *.deb 2> /dev/null || apt-get -qq -f install -y --no-install-recommends) \
     && rm -rf /build && /image_cleaner.sh
-
 USER proof:proof
-
 VOLUME ["/home/proof"]
-
 ENTRYPOINT exec /opt/Opensoft/$TARGET_NAME/bin/$TARGET_NAME
 EOT
 fi
 
 echo "Dockerfile contents:"
 cat Dockerfile;
+echo "";
 docker build -t opensoftdev/$TARGET_NAME -f Dockerfile ./;
 
 if [ -n "$TRAVIS_TAG" ]; then
