@@ -50,8 +50,7 @@ RUN apt-get -qq update \
     && cd /build && (dpkg -i *.deb 2> /dev/null || apt-get -qq -f install -y --no-install-recommends) \
     && rm -rf /build && /image_cleaner.sh
 USER proof:proof
-VOLUME /home/proof/.config/Opensoft /home/proof/.local/share/Opensoft/prooflogs \
-/home/proof/.local/share/Opensoft/$TARGET_NAME /home/proof/.cache/Opensoft/$TARGET_NAME $EXTRA_DOCKER_VOLUMES
+VOLUME /home/proof
 ENTRYPOINT ["/opt/Opensoft/$TARGET_NAME/bin/$TARGET_NAME"]
 EOT
 fi
