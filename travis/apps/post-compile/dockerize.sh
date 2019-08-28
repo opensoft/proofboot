@@ -41,6 +41,10 @@ travis_time_start;
 echo -e "\033[1;33mCreating docker image...\033[0m";
 mkdir build && mv $DEB_FILENAME build/;
 
+if [ -n "$(ls -A $HOME/extra_s3_deps/*.deb 2>/dev/null)" ]; then
+    cp $HOME/extra_s3_deps/*.deb build/;
+fi
+
 if [ ! -f Dockerfile ]; then
 cat << EOT > Dockerfile
 FROM opensoftdev/proof-app-deploy-base
