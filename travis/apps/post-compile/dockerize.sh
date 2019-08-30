@@ -50,8 +50,9 @@ cat << EOT > Dockerfile
 FROM opensoftdev/proof-app-deploy-base
 COPY build/*.deb /build/
 RUN apt-get -qq update \
-    && if [ -n "$USE_OPENCV" ]; then (dpkg -i /prebuilt-extras/*opencv*.deb 2> /dev/null || apt-get -qq -f install -y --no-install-recommends); fi \
-    && cd /build && (dpkg -i *.deb 2> /dev/null || apt-get -qq -f install -y --no-install-recommends) \
+    && if [ -n "$USE_OPENCV" ]; then (apt -qq install /prebuilt-extras/*opencv*.deb -y --no-install-recommends); fi \
+    && if [ -n "$EXTRA_DEPS" ]; then (apt-get -qq install $EXTRA_DEPS -y --no-install-recommends); fi \
+    && cd /build && (apt -qq install ./*.deb -y --no-install-recommends) \
     && rm -rf /build && /image_cleaner.sh
 USER proof:proof
 VOLUME /home/proof
