@@ -29,11 +29,13 @@ set -e
 
 APP_VERSION="$($HOME/proof-bin/dev-tools/travis/grep_proof_app_version.sh .)";
 
-DEB_FILENAME=`find -maxdepth 1 -name "$TARGET_NAME-*.deb" -exec basename "{}" \; -quit`
+DEB_FILENAME=$(locate -n 1 *$TARGET_NAME-*.deb)
 if [ -z "$DEB_FILENAME" ]; then
     echo -e "\033[1;31mCan't find created deb package, halting\033[0m";
     exit 1
 fi
+
+echo "deb package found $DEB_FILENAME"
 
 travis_time_start;
 echo -e "\033[1;33mCreating docker image...\033[0m";
